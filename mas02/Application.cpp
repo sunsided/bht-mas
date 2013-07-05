@@ -264,6 +264,10 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
         mean += intermediate[y];
     }
     mean *= invLines * invSamples;
+
+    // release memory
+    intermediate_max.reset();
+    intermediate_min.reset();
     
     // second run: calculate variance
     #pragma omp parallel for
