@@ -8,12 +8,10 @@
 
 #include "ENVIFileReader.h"
 #include "OpenCvImage.h"
+#include "Stats.h"
 
 /// <summary>Marks a variable as output</summary>
 #define out
-
-/// <summary>Data type used for statistics</summary>
-typedef float stats_t;
 
 /// <summary>
 /// Main application class
@@ -82,8 +80,8 @@ private:
     /// <param name="max">Output: The maximum value.</param>
     /// <param name="mean">Output: The mean value.</param>
     /// <param name="stdDev">Output: The standard deviation.</param>
-    void calculateStatisticsNaive(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, 
-                                  out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const;
+    std::shared_ptr<Stats> calculateStatisticsNaive(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands
+                                               ) const;
 
     /// <summary>
     /// Naive calculation of the statistics using divide-and-conquer
@@ -96,8 +94,8 @@ private:
     /// <param name="max">Output: The maximum value.</param>
     /// <param name="mean">Output: The mean value.</param>
     /// <param name="stdDev">Output: The standard deviation.</param>
-    void calculateStatisticsNaiveDivideConquer(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, 
-                                               out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const;
+    std::shared_ptr<Stats> calculateStatisticsNaiveDivideConquer(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands 
+                                               ) const;
 
     /// <summary>
     /// Forward-calculation of the statistics with divide-and-conquer
@@ -110,8 +108,8 @@ private:
     /// <param name="max">Output: The maximum value.</param>
     /// <param name="mean">Output: The mean value.</param>
     /// <param name="stdDev">Output: The standard deviation.</param>
-    void calculateStatisticsForward(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, 
-                                    out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const;
+    std::shared_ptr<Stats> calculateStatisticsForward(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands
+                                                ) const;
 };
 
 #endif

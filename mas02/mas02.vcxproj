@@ -85,11 +85,13 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ENVIFileReader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Stats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="ENVIFileReader.h" />
     <ClInclude Include="OpenCvImage.h" />
+    <ClInclude Include="Stats.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

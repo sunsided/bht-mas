@@ -2,6 +2,7 @@
 #pragma warning(disable: 4996) // Disable deprecation
 
 #include <algorithm>
+#include <iostream>
 #include <fstream>
 
 #include <opencv/cv.h>
@@ -106,15 +107,15 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
 /// <param name="max">Output: The maximum value.</param>
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
-void Application::calculateStatisticsNaive(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
-                                            out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const
+shared_ptr<Stats> Application::calculateStatisticsNaive(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands
+                                            ) const
 {
     assert(bands == 1);
 
-    min = FLT_MAX;
-    max = FLT_MIN;
-    mean = 0;
-    stdDev = 0;
+    stats_t min = FLT_MAX;
+    stats_t max = FLT_MIN;
+    stats_t mean = 0;
+    stats_t stdDev = 0;
 
     const stats_t invLines = 1.0F / lines;
     const stats_t invSamples = 1.0F / samples;
@@ -175,6 +176,9 @@ void Application::calculateStatisticsNaive(const image_t& image, const samplecou
     // second run, part two: scale variance and calculate standard deviation
     variance *= invLines;
     stdDev = sqrt(variance);
+
+    // up, up and away
+    return shared_ptr<Stats>(new Stats(min, max, mean, stdDev));
 }
 
 /// <summary>
@@ -188,15 +192,15 @@ void Application::calculateStatisticsNaive(const image_t& image, const samplecou
 /// <param name="max">Output: The maximum value.</param>
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
-void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
-                                                        out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const
+shared_ptr<Stats> Application::calculateStatisticsNaiveDivideConquer(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands
+                                                        ) const
 {
     assert(bands == 1);
 
-    min = FLT_MAX;
-    max = FLT_MIN;
-    mean = 0;
-    stdDev = 0;
+    stats_t min = FLT_MAX;
+    stats_t max = FLT_MIN;
+    stats_t mean = 0;
+    stats_t stdDev = 0;
 
     const stats_t count = static_cast<stats_t>(samples * lines);
     const stats_t invLines = 1.0F / lines;
@@ -298,6 +302,9 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
     }
     variance *= invLines * invSamplesA; // Stichprobenvarianz, sample variance
     stdDev = sqrt(variance);
+
+    // up, up and away
+    return shared_ptr<Stats>(new Stats(min, max, mean, stdDev));
 }
 
 
@@ -312,15 +319,15 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
 /// <param name="max">Output: The maximum value.</param>
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
-void Application::calculateStatisticsForward(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
-                                                        out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const
+shared_ptr<Stats> Application::calculateStatisticsForward(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands
+                                                        ) const
 {
     assert(bands == 1);
 
-    min = FLT_MAX;
-    max = FLT_MIN;
-    mean = 0;
-    stdDev = 0;
+    stats_t min = FLT_MAX;
+    stats_t max = FLT_MIN;
+    stats_t mean = 0;
+    stats_t stdDev = 0;
     stats_t variance = 0;
 
     const stats_t count = static_cast<stats_t>(samples * lines);
@@ -402,6 +409,9 @@ void Application::calculateStatisticsForward(const image_t& image, const samplec
 
     // and finalize
     stdDev = sqrt(variance);
+
+    // up, up and away
+    return shared_ptr<Stats>(new Stats(min, max, mean, stdDev));
 }
 
 /// <summary>
@@ -429,23 +439,22 @@ void Application::run()
     inputFile.close();
 
     // calculate naive statistics
-    stats_t min, max, mean, stddev;
     cout << "Calculating statistics (naive) ... ";
-    calculateStatisticsNaive(image, samples, lines, bands, min, max, mean, stddev);
+    auto stats = calculateStatisticsNaive(image, samples, lines, bands);
     cout << "done" << endl;
-    cout << "Range " << min << " .. " << max << ", mean " << mean << " +/- " << stddev << endl;
+    cout << stats << endl;
 
     // calculate naive d/c statistics
     cout << "Calculating statistics (naive divide-and-conquer) ... ";
-    calculateStatisticsNaiveDivideConquer(image, samples, lines, bands, min, max, mean, stddev);
+    stats = calculateStatisticsNaiveDivideConquer(image, samples, lines, bands);
     cout << "done" << endl;
-    cout << "Range " << min << " .. " << max << ", mean " << mean << " +/- " << stddev << endl;
+    cout << stats << endl;
 
     // calculate forward statistics
     cout << "Calculating statistics (forward d&q) ... ";
-    calculateStatisticsForward(image, samples, lines, bands, min, max, mean, stddev);
+    stats = calculateStatisticsForward(image, samples, lines, bands);
     cout << "done" << endl;
-    cout << "Range " << min << " .. " << max << ", mean " << mean << " +/- " << stddev << endl;
+    cout << stats << endl;
 
     // convert image to OpenCV image.
     cout << "Converting image for display ... ";
