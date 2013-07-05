@@ -73,17 +73,32 @@ void Application::run()
     // convert image to OpenCV image.
     cout << "Converting image for display ... ";
     IplImagePtr displayImage(cvCreateImage(cvSize(samples, lines), IPL_DEPTH_8U, bands));
-    for(envi::linecount_t y=0; y<lines; ++y)
+
+    typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
+    #pragma omp parallel for
+    for(omp_linecount_t y=0; y<lines; ++y)
     {
+        envi::line_t& line = image[y];
+        uint_fast32_t lineOffset = y*samples;
+
         for(envi::samplecount_t x=0; x<samples; ++x) 
         {
-            // pick the sample and lerp it to 0..255
-            envi::sample_t sample = image[y][x];
-            sample = min(255.0F, max(0.0F, sample));
+            char& pixel = displayImage->imageData[lineOffset+x];
+
+            // pick the sample and convert it to 8-bit unsigned
+            envi::sample_t sample = line[x];
             uint_fast8_t value = static_cast<uint_fast8_t>(sample);
 
-            // assign sample
-            displayImage->imageData[y*samples+x] = value;
+            // assign sample (prediction friendly)
+            pixel = value;
+
+            // correct in case of problems
+            if (sample < 0.0F) {
+                pixel = 0;
+            }
+            if (sample > 255.0F) {
+                pixel = 255;
+            }
         }
     }
     cout << "done" << endl;
