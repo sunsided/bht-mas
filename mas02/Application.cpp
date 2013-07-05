@@ -55,7 +55,7 @@ IplImagePtr Application::enviToOpenCv(const envi::image_t& image, const envi::sa
 {
     assert(bands == 1);
     
-    cout << "Converting image for display ... ";
+    
     IplImagePtr displayImage(cvCreateImage(cvSize(samples, lines), IPL_DEPTH_8U, bands));
 
     typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
@@ -88,8 +88,6 @@ IplImagePtr Application::enviToOpenCv(const envi::image_t& image, const envi::sa
             }
         }
     }
-    cout << "done" << endl;
-
     return displayImage;
 }
 
@@ -118,7 +116,9 @@ void Application::run()
     inputFile.close();
 
     // convert image to OpenCV image.
+    cout << "Converting image for display ... ";
     IplImagePtr displayImage = enviToOpenCv(image, samples, lines, bands);
+    cout << "done" << endl;
 
     // Display
     createWindow("Original");
