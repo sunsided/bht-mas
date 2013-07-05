@@ -1,8 +1,12 @@
 #ifndef _APPLICATION_H_
 #define _APPLICATION_H_
 
+#pragma warning( disable : 4290 ) // disable throw() not implemented by MSVC
+
 #include <string>
 #include <vector>
+
+#include "OpenCvImage.h"
 
 /// <summary>
 /// Main application class
@@ -25,11 +29,11 @@ public:
     /// Finalizes an instance of the <see cref="Application"/> class.
     /// </summary>
     ~Application() ;
-
+    
     /// <summary>
     /// Runs this instance.
     /// </summary>
-    void run();
+    void run() throw(std::runtime_error);
 
     /// <summary>   Creates a window. </summary>
     ///
