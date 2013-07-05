@@ -95,6 +95,20 @@ private:
     /// <param name="stdDev">Output: The standard deviation.</param>
     void calculateStatisticsNaiveDivideConquer(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, 
                                                out float& min, out float& max, out float& mean, out float& stdDev) const;
+
+    /// <summary>
+    /// Forward-calculation of the statistics with divide-and-conquer
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="samples">The number of samples.</param>
+    /// <param name="lines">The number of lines.</param>
+    /// <param name="bands">The number of bands.</param>
+    /// <param name="min">Output: The minimum value.</param>
+    /// <param name="max">Output: The maximum value.</param>
+    /// <param name="mean">Output: The mean value.</param>
+    /// <param name="stdDev">Output: The standard deviation.</param>
+    void calculateStatisticsForward(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, 
+                                    out float& min, out float& max, out float& mean, out float& stdDev) const;
 };
 
 #endif
