@@ -178,6 +178,106 @@ void Application::calculateStatisticsNaive(const image_t& image, const samplecou
 }
 
 /// <summary>
+/// Naive calculation of the statistics
+/// </summary>
+/// <param name="image">The image.</param>
+/// <param name="samples">The number of samples.</param>
+/// <param name="lines">The number of lines.</param>
+/// <param name="bands">The number of bands.</param>
+/// <param name="min">Output: The minimum value.</param>
+/// <param name="max">Output: The maximum value.</param>
+/// <param name="mean">Output: The mean value.</param>
+/// <param name="stdDev">Output: The standard deviation.</param>
+void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
+                                                        out float& min, out float& max, out float& mean, out float& stdDev) const
+{
+    assert(bands == 1);
+
+    min = FLT_MAX;
+    max = FLT_MIN;
+    mean = 0;
+    stdDev = 0;
+
+    const float invLines = 1.0F / lines;
+    const float invSamples = 1.0F / samples;
+    const float invSamplesA = 1.0F / (samples-1);
+
+    // array for intermediate results of each line
+    unique_ptr<float[]> intermediate(new float[lines]);
+
+    typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
+    omp_linecount_t omp_lines = lines;
+
+    // first run: gather min, max and mean
+    #pragma omp parallel for
+    for(omp_linecount_t y=0; y<omp_lines; ++y)
+    {
+        const line_t& line = image[y];
+        float lineSum = 0;
+
+        // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
+        for(samplecount_t x=0; x<samples; ++x)
+        {
+            const sample_t& sample = line[x];
+            
+            // update mean
+            lineSum += sample;
+
+            // update minimum
+            if (sample < min) {
+                min = sample;
+            }
+
+            // update maximum
+            if (sample > max) {
+                max = sample;
+            }
+        }
+
+        // aggregate mean per line
+        intermediate[y] = lineSum;
+    }
+
+    // conquer intermediate results
+    for(linecount_t y=0; y<lines; ++y)
+    {
+        mean += intermediate[y];
+    }
+    mean *= invLines * invSamples;
+    
+    // second run: calculate variance
+    #pragma omp parallel for
+    for(omp_linecount_t y=0; y<omp_lines; ++y)
+    {
+        const line_t& line = image[y];
+        float rowVariance = 0;
+
+        // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
+        for(samplecount_t x=0; x<samples; ++x)
+        {
+            const sample_t& sample = line[x];
+            
+            const float diff = sample - mean;
+            rowVariance += (diff * diff);
+        }
+
+        // aggregate variance per line
+        intermediate[y] = rowVariance;
+    }
+
+    // second run, part two: scale variance and calculate standard deviation
+    // conquer intermediate results
+    float variance = 0;
+    for(linecount_t y=0; y<lines; ++y)
+    {
+        variance += intermediate[y];
+    }
+    variance *= invLines * invSamplesA; // Stichprobenvarianz, sample variance
+    stdDev = sqrt(variance);
+}
+
+
+/// <summary>
 /// Runs this instance.
 /// </summary>
 void Application::run()
@@ -205,6 +305,12 @@ void Application::run()
     float min, max, mean, stddev;
     cout << "Calculating statistics (naive) ... ";
     calculateStatisticsNaive(image, samples, lines, bands, min, max, mean, stddev);
+    cout << "done" << endl;
+    cout << "Range " << min << " .. " << max << ", mean " << mean << " +/- " << stddev << endl;
+
+    // calculate naive d/c statistics
+    cout << "Calculating statistics (naive divide-and-conquer) ... ";
+    calculateStatisticsNaiveDivideConquer(image, samples, lines, bands, min, max, mean, stddev);
     cout << "done" << endl;
     cout << "Range " << min << " .. " << max << ", mean " << mean << " +/- " << stddev << endl;
 
