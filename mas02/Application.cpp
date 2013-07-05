@@ -61,6 +61,7 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
     assert(bands == 1);
    
     IplImagePtr displayImage(cvCreateImage(cvSize(samples, lines), IPL_DEPTH_8U, bands));
+    samplecount_t step = displayImage->widthStep;
 
     typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
     omp_linecount_t omp_lines = lines;
@@ -69,7 +70,7 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
         line_t& line = image[y];
-        uint_fast32_t lineOffset = y*samples;
+        uint_fast32_t lineOffset = y*(step);
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
         for(samplecount_t x=0; x<samples; ++x)
