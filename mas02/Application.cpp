@@ -107,7 +107,7 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
 void Application::calculateStatisticsNaive(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
-                                            out float& min, out float& max, out float& mean, out float& stdDev) const
+                                            out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const
 {
     assert(bands == 1);
 
@@ -116,15 +116,15 @@ void Application::calculateStatisticsNaive(const image_t& image, const samplecou
     mean = 0;
     stdDev = 0;
 
-    const float invLines = 1.0F / lines;
-    const float invSamples = 1.0F / samples;
-    const float invSamplesA = 1.0F / (samples-1);
+    const stats_t invLines = 1.0F / lines;
+    const stats_t invSamples = 1.0F / samples;
+    const stats_t invSamplesA = 1.0F / (samples-1);
 
     // first run: gather min, max and mean
     for(linecount_t y=0; y<lines; ++y)
     {
         const line_t& line = image[y];
-        float lineSum = 0;
+        stats_t lineSum = 0;
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
         for(samplecount_t x=0; x<samples; ++x)
@@ -153,18 +153,18 @@ void Application::calculateStatisticsNaive(const image_t& image, const samplecou
     mean *= invLines;
     
     // second run: calculate variance
-    float variance = 0;
+    stats_t variance = 0;
     for(linecount_t y=0; y<lines; ++y)
     {
         const line_t& line = image[y];
-        float rowVariance = 0;
+        stats_t rowVariance = 0;
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
         for(samplecount_t x=0; x<samples; ++x)
         {
             const sample_t& sample = line[x];
             
-            const float diff = sample - mean;
+            const stats_t diff = sample - mean;
             rowVariance += (diff * diff);
         }
 
@@ -189,7 +189,7 @@ void Application::calculateStatisticsNaive(const image_t& image, const samplecou
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
 void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
-                                                        out float& min, out float& max, out float& mean, out float& stdDev) const
+                                                        out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const
 {
     assert(bands == 1);
 
@@ -198,15 +198,15 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
     mean = 0;
     stdDev = 0;
 
-    const float count = static_cast<float>(samples * lines);
-    const float invLines = 1.0F / lines;
-    const float invSamples = 1.0F / samples;
-    const float invSamplesA = 1.0F / (samples-1);
+    const stats_t count = static_cast<stats_t>(samples * lines);
+    const stats_t invLines = 1.0F / lines;
+    const stats_t invSamples = 1.0F / samples;
+    const stats_t invSamplesA = 1.0F / (samples-1);
 
     // array for intermediate results of each line
-    unique_ptr<float[]> intermediate(new float[lines]);
-    unique_ptr<float[]> intermediate_min(new float[lines]);
-    unique_ptr<float[]> intermediate_max(new float[lines]);
+    unique_ptr<stats_t[]> intermediate(new stats_t[lines]);
+    unique_ptr<stats_t[]> intermediate_min(new stats_t[lines]);
+    unique_ptr<stats_t[]> intermediate_max(new stats_t[lines]);
 
     typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
     omp_linecount_t omp_lines = lines;
@@ -216,9 +216,9 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
         const line_t& line = image[y];
-        float lineSum = 0;
-        float lineMin = FLT_MAX;
-        float lineMax = FLT_MIN;
+        stats_t lineSum = 0;
+        stats_t lineMin = FLT_MAX;
+        stats_t lineMax = FLT_MIN;
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
         for(samplecount_t x=0; x<samples; ++x)
@@ -249,13 +249,13 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
     for(linecount_t y=0; y<lines; ++y)
     {
         // update minimum
-        float& lineMin = intermediate_min[y];
+        stats_t& lineMin = intermediate_min[y];
         if (lineMin < min) {
             min = lineMin;
         }
 
         // update maximum
-        float& lineMax = intermediate_max[y];
+        stats_t& lineMax = intermediate_max[y];
         if (lineMax > max) {
             max = lineMax;
         }
@@ -270,14 +270,14 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
         const line_t& line = image[y];
-        float rowVariance = 0;
+        stats_t rowVariance = 0;
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
         for(samplecount_t x=0; x<samples; ++x)
         {
             const sample_t& sample = line[x];
             
-            const float diff = sample - mean;
+            const stats_t diff = sample - mean;
             rowVariance += (diff * diff);
         }
 
@@ -287,7 +287,7 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
 
     // second run, part two: scale variance and calculate standard deviation
     // conquer intermediate results
-    float variance = 0;
+    stats_t variance = 0;
     for(linecount_t y=0; y<lines; ++y)
     {
         variance += intermediate[y];
@@ -309,7 +309,7 @@ void Application::calculateStatisticsNaiveDivideConquer(const image_t& image, co
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
 void Application::calculateStatisticsForward(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, 
-                                                        out float& min, out float& max, out float& mean, out float& stdDev) const
+                                                        out stats_t& min, out stats_t& max, out stats_t& mean, out stats_t& stdDev) const
 {
     assert(bands == 1);
 
@@ -317,34 +317,34 @@ void Application::calculateStatisticsForward(const image_t& image, const samplec
     max = FLT_MIN;
     mean = 0;
     stdDev = 0;
-    float variance = 0;
+    stats_t variance = 0;
 
-    const float count = static_cast<float>(samples * lines);
-    const float invLines = 1.0F / lines;
-    const float invSamples = 1.0F / samples;
-    const float invSamplesA = 1.0F / (samples-1);
+    const stats_t count = static_cast<stats_t>(samples * lines);
+    const stats_t invLines = 1.0F / lines;
+    const stats_t invSamples = 1.0F / samples;
+    const stats_t invSamplesA = 1.0F / (samples-1);
     
-    float sum = 0;
-    float squareSum = 0;
+    stats_t sum = 0;
+    stats_t squareSum = 0;
 
     typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
     omp_linecount_t omp_lines = lines;
 
     // array for intermediate results of each line
-    unique_ptr<float[]> intermediate_sum(new float[lines]);
-    unique_ptr<float[]> intermediate_ssq(new float[lines]);
-    unique_ptr<float[]> intermediate_min(new float[lines]);
-    unique_ptr<float[]> intermediate_max(new float[lines]);
+    unique_ptr<stats_t[]> intermediate_sum(new stats_t[lines]);
+    unique_ptr<stats_t[]> intermediate_ssq(new stats_t[lines]);
+    unique_ptr<stats_t[]> intermediate_min(new stats_t[lines]);
+    unique_ptr<stats_t[]> intermediate_max(new stats_t[lines]);
 
     // single run: gather min, max, mean and standard deviation
     #pragma omp parallel for
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
         const line_t& line = image[y];
-        float lineSum = 0;
-        float lineSumSq = 0;
-        float lineMin = FLT_MAX;
-        float lineMax = FLT_MIN;
+        stats_t lineSum = 0;
+        stats_t lineSumSq = 0;
+        stats_t lineMin = FLT_MAX;
+        stats_t lineMax = FLT_MIN;
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
         for(samplecount_t x=0; x<samples; ++x)
@@ -376,13 +376,13 @@ void Application::calculateStatisticsForward(const image_t& image, const samplec
     for(linecount_t y=0; y<lines; ++y)
     {
         // update minimum
-        float& lineMin = intermediate_min[y];
+        stats_t& lineMin = intermediate_min[y];
         if (lineMin < min) {
             min = lineMin;
         }
 
         // update maximum
-        float& lineMax = intermediate_max[y];
+        stats_t& lineMax = intermediate_max[y];
         if (lineMax > max) {
             max = lineMax;
         }
@@ -425,7 +425,7 @@ void Application::run()
     inputFile.close();
 
     // calculate naive statistics
-    float min, max, mean, stddev;
+    stats_t min, max, mean, stddev;
     cout << "Calculating statistics (naive) ... ";
     calculateStatisticsNaive(image, samples, lines, bands, min, max, mean, stddev);
     cout << "done" << endl;
