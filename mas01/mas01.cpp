@@ -1,6 +1,7 @@
-#include <iostream>
-#include <cstdint>
 #include <algorithm> 
+#include <cstdint>
+#include <iostream>
+#include <memory>
 
 using namespace std;
 
@@ -12,17 +13,31 @@ using namespace std;
 
 // gcc -I/usr/include/opencv -lcv -lhighgui -lstdc++  main01.c -o main01
 
-void invert_8u(IplImage** img);
-void transform(IplImage** img, double angle, double scale);
+// custom delete für IplImage-Pointer
+struct IplImageDeleter 
+{
+    void operator()(IplImage* image) const {
+        if (!image) return;
+        cvReleaseImage(&image); 
+    }
+};
+
+// alias for IplImage-Pointer
+typedef unique_ptr<IplImage, IplImageDeleter> IplImagePtr;
+
+void invert_8u(IplImagePtr& img);
+void transform(IplImagePtr& img, double angle, double scale);
+
 
 int main(void) 
 {
-    // Bild laden & anzeigen
-    IplImage *img1;
+    // Fenster erzeugen
     cvNamedWindow("original image", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("processed image", CV_WINDOW_AUTOSIZE);
 
-    if((img1 = cvLoadImage("./images/lena.jpg", CV_LOAD_IMAGE_GRAYSCALE)) == NULL) {
+    // Bild laden & anzeigen
+    IplImagePtr img1(cvLoadImage("./images/lena.jpg", CV_LOAD_IMAGE_GRAYSCALE));
+    if(img1.get() == NULL) {
         cerr << "Could not open image file" << endl;
         exit(0);
     };
@@ -37,7 +52,13 @@ int main(void)
          << "Kanäle:    "  << to_string(channels) << "x" << to_string(depth) << endl;
 
     // Bild kopieren
-    IplImage *img2 = cvCreateImage(cvSize(width, height), depth, channels);
+    IplImagePtr img2(cvCreateImage(cvSize(width, height), depth, channels));
+    if(img1.get() == NULL) {
+        cerr << "Could not create working copy" << endl;
+        exit(0);
+    };
+
+    // naive image copy
     for (auto y=0; y<height; ++y) 
     {
         auto line = y*widthStep;
@@ -52,46 +73,44 @@ int main(void)
     }
 
     // Bild invertieren und rotieren
-    invert_8u(&img2);
-    transform(&img2, 45.0, 1.5);
+    invert_8u(img2);
+    transform(img2, 45.0, 1.5);
 
     // Region of Interest / Addition
-    cvSetImageROI(img2, cvRect(40,10,100,100));
-    cvAddS(img2, cvScalar(50), img2);
-    cvResetImageROI(img2);
+    cvSetImageROI(img2.get(), cvRect(40,10,100,100));
+    cvAddS(img2.get(), cvScalar(50), img2.get());
+    cvResetImageROI(img2.get());
 
     // Hellste und dunkelste Werte ermitteln
     double min, max;
-    cvMinMaxLoc(img1, &min, &max, NULL, NULL, NULL);
+    cvMinMaxLoc(img1.get(), &min, &max, NULL, NULL, NULL);
     cout << "Werte:     " << to_string(static_cast<uint_fast8_t>(min)) << ".." << to_string(static_cast<uint_fast8_t>(max)) << endl;
 
     // Bild anzeigen und speichern
-    cvShowImage("original image", img1);
-    cvShowImage("processed image", img2);
-    cvSaveImage("./mas01_lena_modified.jpg", img1);
+    cvShowImage("original image", img1.get());
+    cvShowImage("processed image", img2.get());
+    cvSaveImage("./mas01_lena_modified.jpg", img1.get());
 
     // Freigeben	
     cvWaitKey(0);
-    cvReleaseImage(&img2);
-    cvReleaseImage(&img1);
     cvDestroyWindow("original image");
     cvDestroyWindow("processed image");
     return 0;
 }
 
 // invertiert das Bild in einem bestimmten Bereich
-void invert_8u(IplImage** img) 
+void invert_8u(IplImagePtr& img) 
 {
-    uint_fast16_t width 	= (*img)->width;
+    uint_fast16_t width 	= img->width;
     uint_fast16_t left 	= width / 6;
     uint_fast16_t right 	= width - left;
 
-    uint_fast16_t height 	= (*img)->height;
+    uint_fast16_t height 	= img->height;
     uint_fast16_t top 	= height / 6;
     uint_fast16_t bottom 	= height - top;
 
-    uint8_t* imageData	= reinterpret_cast<uint8_t*>((*img)->imageData);
-    uint_fast16_t widthStep = (*img)->widthStep;
+    uint8_t* imageData	= reinterpret_cast<uint8_t*>(img->imageData);
+    uint_fast16_t widthStep = img->widthStep;
 
     // Zeilen durchlaufen
     for (uint_fast16_t y=top; y < bottom; ++y) 
@@ -110,21 +129,21 @@ void invert_8u(IplImage** img)
 }
 
 // führt eine affine Transformation aus
-void transform(IplImage** img, double angle, double scale)
+void transform(IplImagePtr& img, double angle, double scale)
 {
     // Zielbild erzeugen
-    IplImage *dst = cvCloneImage(*img);
+    IplImage *dst = cvCloneImage(img.get());
     // printf("Dimension': %d x %d\n", dst->width, dst->height);
     // printf("Kanäle':    %d x %d bit\n", dst->nChannels, dst->depth);
 
     // Matrix erzeugen
     CvMat* 		rot_mat = cvCreateMat(2, 3, CV_32FC1); // 32bit, float, 1 Kanal
-    CvPoint2D32f 	center = cvPoint2D32f((*img)->width / 2, (*img)->height / 2);
+    CvPoint2D32f 	center = cvPoint2D32f((img)->width / 2, (img)->height / 2);
     cv2DRotationMatrix(center, angle, scale, rot_mat);
 
     // Transformieren
-    cvWarpAffine(*img, dst, rot_mat);
-    cvCopy(dst, *img);
+    cvWarpAffine(img.get(), dst, rot_mat);
+    cvCopy(dst, img.get());
 
     // Speicher freigeben
     cvReleaseImage(&dst);
