@@ -1,0 +1,10 @@
+/Debug/
+/Release/
+**/Debug/
+**/Release/
+*.suo
+*.ilk
+*.sdf
+*.opensdf
+*.pdb
+*.user
