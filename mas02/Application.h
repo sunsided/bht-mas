@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "ENVIFileReader.h"
 #include "OpenCvImage.h"
 
 /// <summary>
@@ -51,6 +52,14 @@ public:
     ///
     /// <param name="name"> [in] The name. </param>
     void createWindow(const std::string& name);
+
+private:
+    /// <summary>
+    /// Converts an ENVI image to OpenCV
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <returns>The converted image</returns>
+    IplImagePtr enviToOpenCv(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands) const;
 };
 
 #endif
