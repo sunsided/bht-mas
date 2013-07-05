@@ -319,16 +319,21 @@ shared_ptr<Stats> Application::calculateStatisticsNaiveDivideConquer(const image
 /// <param name="max">Output: The maximum value.</param>
 /// <param name="mean">Output: The mean value.</param>
 /// <param name="stdDev">Output: The standard deviation.</param>
-shared_ptr<Stats> Application::calculateStatisticsForward(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands
+shared_ptr<Stats> Application::calculateStatisticsForward(const image_t& image, const samplecount_t& sample_first, const samplecount_t& sample_last, const linecount_t& line_first, const linecount_t& line_last, const bandcount_t& bands
                                                         ) const
 {
     assert(bands == 1);
+    assert(sample_last >= sample_first);
+    assert(line_last >= line_first);
 
     stats_t min = FLT_MAX;
     stats_t max = FLT_MIN;
     stats_t mean = 0;
     stats_t stdDev = 0;
     stats_t variance = 0;
+
+    samplecount_t samples = sample_last - sample_first + 1;
+    linecount_t lines = line_last - line_first + 1;
 
     const stats_t count = static_cast<stats_t>(samples * lines);
     const stats_t invLines = 1.0F / lines;
@@ -351,14 +356,14 @@ shared_ptr<Stats> Application::calculateStatisticsForward(const image_t& image, 
     #pragma omp parallel for
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
-        const line_t& line = image[y];
+        const line_t& line = image[y+line_first];
         stats_t lineSum = 0;
         stats_t lineSumSq = 0;
         stats_t lineMin = FLT_MAX;
         stats_t lineMax = FLT_MIN;
 
         // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
-        for(samplecount_t x=0; x<samples; ++x)
+        for(samplecount_t x=sample_first; x<=sample_last; ++x)
         {
             const sample_t& sample = line[x];
             
@@ -452,7 +457,7 @@ void Application::run()
 
     // calculate forward statistics
     cout << "Calculating statistics (forward d&q) ... ";
-    stats = calculateStatisticsForward(image, samples, lines, bands);
+    stats = calculateStatisticsForward(image, 0, samples-1, 0, lines-1, bands);
     cout << "done" << endl;
     cout << stats << endl;
 

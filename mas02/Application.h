@@ -80,8 +80,7 @@ private:
     /// <param name="max">Output: The maximum value.</param>
     /// <param name="mean">Output: The mean value.</param>
     /// <param name="stdDev">Output: The standard deviation.</param>
-    std::shared_ptr<Stats> calculateStatisticsNaive(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands
-                                               ) const;
+    std::shared_ptr<Stats> calculateStatisticsNaive(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands) const;
 
     /// <summary>
     /// Naive calculation of the statistics using divide-and-conquer
@@ -94,8 +93,7 @@ private:
     /// <param name="max">Output: The maximum value.</param>
     /// <param name="mean">Output: The mean value.</param>
     /// <param name="stdDev">Output: The standard deviation.</param>
-    std::shared_ptr<Stats> calculateStatisticsNaiveDivideConquer(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands 
-                                               ) const;
+    std::shared_ptr<Stats> calculateStatisticsNaiveDivideConquer(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands) const;
 
     /// <summary>
     /// Forward-calculation of the statistics with divide-and-conquer
@@ -108,8 +106,8 @@ private:
     /// <param name="max">Output: The maximum value.</param>
     /// <param name="mean">Output: The mean value.</param>
     /// <param name="stdDev">Output: The standard deviation.</param>
-    std::shared_ptr<Stats> calculateStatisticsForward(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands
-                                                ) const;
+    std::shared_ptr<Stats> calculateStatisticsForward(const envi::image_t& image, const envi::samplecount_t& sample_first, const envi::samplecount_t& sample_last, const envi::linecount_t& line_first, 
+        const envi::linecount_t& line_last, const envi::bandcount_t& bands ) const;
 };
 
 #endif
