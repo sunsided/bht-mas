@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <memory>
 
 #include <opencv/cv.h>
@@ -71,4 +72,65 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
         }
     }
     return displayImage;
+}
+
+/// <summary>
+/// Scales down the image
+/// </summary>
+/// <param name="image">The image.</param>
+/// <param name="samples">The samples.</param>
+/// <param name="lines">The lines.</param>
+/// <param name="bands">The bands.</param>
+/// <param name="scaleFactor">The scaling factor. Must be larger than or equal to 1.</param>
+/// <returns>The scaled image.</returns>
+image_t Application::scaleDownLinear(const image_t& image, const samplecount_t& samples, const linecount_t& lines, const bandcount_t& bands, const float scaleFactor) const
+{
+    assert(scaleFactor >= 1.0F);
+
+    float invScaleFactor = 1.0F/scaleFactor;
+    samplecount_t new_samples = samples * invScaleFactor;
+    samplecount_t new_lines = lines * invScaleFactor;
+
+    // === perpare copy ===
+
+    // create the line array
+    image_t target = image_t(new line_t[new_lines]);
+    if (!image) throw runtime_error("not enough memory to create scaled-down line array");
+
+    // for each line, create the sample array
+    for (linecount_t lineIndex = 0; lineIndex < new_lines; ++lineIndex)
+    {
+        target[lineIndex].reset(new sample_t[new_samples]);
+        if (!target[lineIndex]) throw runtime_error("not enough memory to create scaled-down sample array");
+    }
+
+    // === copy image ===
+
+    typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
+    omp_linecount_t omp_lines = lines;
+    omp_linecount_t omp_line_skip = static_cast<omp_linecount_t>(scaleFactor);
+    assert(omp_line_skip >= 1.0F);
+
+    samplecount_t sample_skip = static_cast<samplecount_t>(scaleFactor);
+
+    linecount_t target_y = 0;
+
+    // #pragma omp parallel for
+    for(omp_linecount_t y=0; y<omp_lines; y += omp_line_skip)
+    {
+        const line_t& source_line = image[y];
+        line_t& target_line = target[target_y];
+        samplecount_t target_x = 0;
+
+        // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
+        for(samplecount_t x=0; x<samples; x += sample_skip)
+        {
+            target_line[target_x] = source_line[x];
+            ++target_x;
+        }
+
+        ++target_y;
+    }
+
+    return target;
 }

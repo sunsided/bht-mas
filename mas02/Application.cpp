@@ -130,9 +130,17 @@ void Application::run()
         cout << "class " << to_string(i) << "\tvalue: " << to_string(value) << "%" << endl;
     }
     
+    // scaling
+    const float scaleFactor = 10;
+    auto scaled = scaleDownLinear(image, samples, lines, bands, scaleFactor);
+    auto cvscaled = enviToOpenCv(scaled, static_cast<samplecount_t>(samples/scaleFactor), static_cast<linecount_t>(lines/scaleFactor), bands, stats->min, stats->max);
+
     // Display
     createWindow("Original");
     cvShowImage("Original", displayImage.get());
+
+    createWindow("Scaled");
+    cvShowImage("Scaled", cvscaled.get());
 
     createWindow("Low Density");
     cvShowImage("Low Density", lowDensityRegion.get());

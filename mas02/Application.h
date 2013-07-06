@@ -89,6 +89,17 @@ private:
         const envi::linecount_t& line_last, const envi::bandcount_t& bands, const envi::sample_t& min = 0.0F, const envi::sample_t& max = 1.0F) const;
 
     /// <summary>
+    /// Scales down the image
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="samples">The samples.</param>
+    /// <param name="lines">The lines.</param>
+    /// <param name="bands">The bands.</param>
+    /// <param name="scaleFactor">The scaling factor; Scaling will be 1/scaleFactor. Must be larger than or equal to 1.</param>
+    /// <returns>The scaled image.</returns>
+    envi::image_t scaleDownLinear(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, const float scaleFactor) const;
+
+    /// <summary>
     /// Naive calculation of the statistics
     /// </summary>
     /// <param name="image">The image.</param>
