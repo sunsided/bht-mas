@@ -176,9 +176,7 @@ image_t Application::correlate(const image_t& raw, const image_t& mask, samples_
             coeffs_line->sample(x) = corr_coeff;
         }
     }
-
-    cout << "done." << endl;
-
+    
     // find minimum and maximum coefficients
     min_coeff = FLT_MAX;
     max_coeff = FLT_MIN;
@@ -209,6 +207,94 @@ image_t Application::correlate(const image_t& raw, const image_t& mask, samples_
     }
 
     return coeffs;
+}
+
+/// <summary>
+/// Calculates the absolute differences between the image and the mask
+/// </summary>
+/// <param name="raw">The raw image.</param>
+/// <param name="mask">The mask.</param>
+/// <param name="candidate_x">The candidate x coordinate.</param>
+/// <param name="candidate_y">The candidate y coordinate.</param>
+/// <param name="min_diff">The minimum difference.</param>
+/// <param name="max_diff">The minimum difference.</param>
+/// <returns>image displaying the differences.</returns>
+image_t Application::difference(const image_t& raw, const image_t& mask, out samples_t& candidate_x, out lines_t& candidate_y, out sample_t& min_diff, out sample_t& max_diff)
+{
+    // image to hold the coefficients
+    image_t diffs(new FloatImage(raw->samples, raw->lines, 1, true));
+
+    const samples_t raw_samples     = raw->samples;
+    const lines_t raw_lines         = raw->lines;
+    const samples_t mask_samples    = mask->samples;
+    const lines_t mask_lines        = mask->lines;
+
+    // OpenMP needs signed integral type
+    typedef int_fast32_t omp_linecount_t;
+    omp_linecount_t omp_lines = raw_lines;
+
+    // iterate over all pixels
+    const omp_linecount_t bottommost_exclusive = omp_lines - mask_lines;
+    const samples_t rightmost_exclusive = raw_samples - mask_samples;
+
+    #pragma omp parallel for
+    for (omp_linecount_t y = 0; y < bottommost_exclusive; ++y)
+    {
+        line_t &diffs_line = diffs->line(y);
+
+        for (samples_t x = 0; x < rightmost_exclusive; ++x)
+        {
+            // correlate the pixels in mask-space (in the area overlayed by the mask)
+            sample_t block_difference = 0.0F;
+            for (lines_t my = 0; my < mask_lines; ++my) // loop all lines in mask-space
+            {
+                const line_t &raw_line = raw->line(y+my);
+                const line_t &mask_line = mask->line(my);
+
+                for (samples_t mx = 0; mx < mask_samples; ++mx) // loop all samples in mask-space
+                {
+                    const sample_t &raw_sample = raw_line->sample(x+mx);
+                    const sample_t &mask_sample = mask_line->sample(mx);
+                    
+                    block_difference += abs(raw_sample - mask_sample);
+                }
+            }
+
+            // remember coefficients for later display
+            diffs_line->sample(x) = block_difference;
+        }
+    }
+
+    // find minimum and maximum coefficients
+    min_diff = FLT_MAX;
+    max_diff = FLT_MIN;
+    candidate_x = 0;
+    candidate_y = 0;
+    for (omp_linecount_t y = 0; y < bottommost_exclusive; ++y)
+    {
+        line_t &coeffs_line = diffs->line(y);
+
+        for (samples_t x = 0; x < rightmost_exclusive; ++x)
+        {
+            sample_t &sample = coeffs_line->sample(x);
+            if (sample < min_diff)
+            {
+                min_diff = sample;
+
+                candidate_x = x;
+                candidate_y = y;
+
+                // THEORY: filtering out values that are the local maximum within the neighbourhood of the mask's size yields all candidates
+                // THEORY: applying median segmentation of the grey levels of all candidates yields strong candidates
+            }
+            if (sample > max_diff)
+            {
+                max_diff = sample;
+            }
+        }
+    }
+
+    return diffs;
 }
 
 /// <summary>
@@ -286,26 +372,49 @@ void Application::run()
     image_t& raw = raw_images[2];
 
     sample_t min_coeff = FLT_MAX, max_coeff = FLT_MIN;
-    samples_t max_match_x = 0;
-    samples_t max_match_y = 0;
-    auto coeffs = correlate(raw, mask, max_match_x, max_match_y, min_coeff, max_coeff);
+    samples_t corr_max_match_x = 0;
+    samples_t corr_max_match_y = 0;
+    auto corr_coeffs = correlate(raw, mask, corr_max_match_x, corr_max_match_y, min_coeff, max_coeff);
+    cout << "done." << endl;
 
     cout << "correlation coefficient in range " << min_coeff << " .. " << max_coeff << endl;
-    cout << "maximum match at {" << to_string(max_match_x) << ", " << to_string(max_match_y) << "}" << endl;
+    cout << "correlation maximum match at {" << to_string(corr_max_match_x) << ", " << to_string(corr_max_match_y) << "}" << endl;
 
     // display correlation coefficients
     OpenCvWindow& corr_coeffs_window = createWindow("correlation coefficients");
-    auto corr_coeff_cv = coeffs->toOpenCv(0.0F, max_coeff); // ignoring all negative correlation coefficients
+    auto corr_coeff_cv = corr_coeffs->toOpenCv(0.0F, max_coeff); // ignoring all negative correlation coefficients
     corr_coeffs_window.showImage(corr_coeff_cv);
+
+    // === build difference ===
+
+    cout << "Calculating difference coefficients ... ";
+    
+    min_coeff = FLT_MAX; max_coeff = FLT_MIN;
+    samples_t diff_max_match_x = 0;
+    samples_t diff_max_match_y = 0;
+    auto diff_coeffs = difference(raw, mask, diff_max_match_x, diff_max_match_y, min_coeff, max_coeff);
+    cout << "done." << endl;
+
+    cout << "difference coefficient in range " << min_coeff << " .. " << max_coeff << endl;
+    cout << "difference maximum match at {" << to_string(diff_max_match_x) << ", " << to_string(diff_max_match_y) << "}" << endl;
+
+    // display correlation coefficients
+    OpenCvWindow& diff_coeffs_window = createWindow("difference coefficients");
+    auto diff_coeff_cv = diff_coeffs->toOpenCv(0.0F, max_coeff); // ignoring all negative correlation coefficients
+    diff_coeffs_window.showImage(diff_coeff_cv);
+
+    // === display raw picture ===
 
     // display raw picture
     OpenCvWindow& corr_coeffs_raw_window = createWindow("raw picture for correlation coefficients");
     auto raw_cv = raw->toOpenCvBGR();
-    markCandidateInOpenCvBGRInGreen(raw_cv, max_match_x, max_match_y, mask->samples, mask->lines);
+    markCandidateInOpenCvBGRInRed(raw_cv, corr_max_match_x, corr_max_match_y, mask->samples, mask->lines);
+    markCandidateInOpenCvBGRInGreen(raw_cv, diff_max_match_x, diff_max_match_y, mask->samples, mask->lines);
     corr_coeffs_raw_window.showImage(raw_cv);
 
     cvWaitKey(0);
 
+    /*
     // === animate ===
 
     OpenCvWindow& window = createWindow("Animation");
@@ -322,4 +431,5 @@ void Application::run()
         break_loop = key >= 0;
         if (break_loop) break;
     }
+    */
 }
