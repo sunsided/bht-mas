@@ -14,6 +14,9 @@
 /// <summary>Marks a variable as output</summary>
 #define out
 
+/// <summary>A single histogram bin</summary>
+typedef float histogram_bin;
+
 /// <summary>
 /// Main application class
 /// </summary>
@@ -162,7 +165,7 @@ private:
     /// <param name="image">The image.</param>
     /// <param name="class_count">The number of classes.</param>
     /// <returns>The classes.</returns>
-    std::unique_ptr<float[]> buildHistogram(const envi::image_t& image, const envi::samplecount_t& samples, const envi::samplecount_t& lines, const envi::bandcount_t& bands, 
+    std::unique_ptr<histogram_bin[]> buildHistogram(const envi::image_t& image, const envi::samplecount_t& samples, const envi::samplecount_t& lines, const envi::bandcount_t& bands, 
         const stats_t low_value, const stats_t high_value, const uint_fast8_t class_count = 10) const;
 };
 

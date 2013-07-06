@@ -434,7 +434,7 @@ shared_ptr<Stats> Application::calculateStatisticsForward(const image_t& image, 
 /// <param name="image">The image.</param>
 /// <param name="class_count">The number of classes.</param>
 /// <returns>The classes.</returns>
-unique_ptr<float[]> Application::buildHistogram(const envi::image_t& image, const samplecount_t& samples, const samplecount_t& lines, const bandcount_t& bands, const stats_t low_value, const stats_t high_value, const uint_fast8_t class_count) const
+unique_ptr<histogram_bin[]> Application::buildHistogram(const envi::image_t& image, const samplecount_t& samples, const samplecount_t& lines, const bandcount_t& bands, const stats_t low_value, const stats_t high_value, const uint_fast8_t class_count) const
 {
     assert (bands == 1);
     assert (high_value >= low_value);
@@ -446,13 +446,16 @@ unique_ptr<float[]> Application::buildHistogram(const envi::image_t& image, cons
     const stats_t step = width / f_count;
 
     // create a buffer of lines classes per line
-    float** lines_histogram = new float*[lines];
+    typedef histogram_bin* histogram_t;
+    typedef histogram_t*   line_histograms_t;
+
+    line_histograms_t line_histograms = new histogram_t[lines];
     for (linecount_t y=0; y<lines; ++y)
     {
-        lines_histogram[y] = new float[class_count];
+        line_histograms[y] = new histogram_bin[class_count];
         for (uint_fast8_t c=0; c<class_count; ++c)
         {
-            lines_histogram[y][c] = 0;
+            line_histograms[y][c] = 0;
         }
     }
 
@@ -463,7 +466,7 @@ unique_ptr<float[]> Application::buildHistogram(const envi::image_t& image, cons
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
         line_t& line = image[y];
-        auto& histogram = lines_histogram[y];
+        auto& histogram = line_histograms[y];
 
         float lineSum = 0;
 
@@ -492,7 +495,7 @@ unique_ptr<float[]> Application::buildHistogram(const envi::image_t& image, cons
     }
     
     // initialize the composite histogram
-    unique_ptr<float[]> histogram(new float[class_count]);
+    unique_ptr<histogram_bin[]> histogram(new float[class_count]);
     for (uint_fast8_t c=0; c<class_count; ++c)
     {
         histogram[c] = 0;
@@ -502,16 +505,20 @@ unique_ptr<float[]> Application::buildHistogram(const envi::image_t& image, cons
     float count = 0;
     for (linecount_t y=0; y<lines; ++y)
     {
-        auto& line_hist = lines_histogram[y];
+        // fetch the histogram of the current line and aggregate it
+        auto& line_hist = line_histograms[y];
         for (uint_fast8_t c=0; c<class_count; ++c)
         {
             histogram[c] += line_hist[c];
             count += line_hist[c];
         }
 
+        // delete the current line, we don't need it anymore
         delete[] line_hist;
     }
-    delete[] lines_histogram;
+
+    // delete the line histogram table
+    delete[] line_histograms;
 
     // scale composite histogram
     const float invCount = 1.0F / count;
