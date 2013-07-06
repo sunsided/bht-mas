@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <memory>
 
+#include "OpenCvImage.h"
+
 typedef uint_fast16_t samples_t;
 typedef uint_fast16_t lines_t;
 typedef uint_fast8_t  bands_t;
@@ -49,7 +51,17 @@ public:
     /// </summary>
     /// <param name="sample">The sample.</param>
     /// <returns>sample_t &.</returns>
-    sample_t& sample(const samples_t& sample) const
+    inline sample_t& sample(const samples_t& sample) const
+    {
+        return _line[sample];
+    }
+
+    /// <summary>
+    /// Gets the sample at the given position
+    /// </summary>
+    /// <param name="sample">The sample.</param>
+    /// <returns>sample_t &.</returns>
+    inline sample_t& operator[](const samples_t& sample) const
     {
         return _line[sample];
     }
@@ -78,6 +90,11 @@ public:
     const lines_t lines;
     
     /// <summary>
+    /// The number of color bands
+    /// </summary>
+    const bands_t bands;
+
+    /// <summary>
     /// The image size
     /// </summary>
     const imagesize_t size;
@@ -90,7 +107,7 @@ public:
     /// <param name="lines">The number of lines.</param>
     /// <param name="bands">The number of bands.</param>
     /// <param name="zero">If true the pixels will be initialized to zero.</param>
-    FloatImage(const samples_t samples, const lines_t lines, bool zero = true) throw(std::runtime_error);
+    FloatImage(const samples_t& samples, const lines_t& lines, const bands_t& bands, bool zero = true) throw(std::runtime_error);
 
     /// <summary>
     /// Finalizes an instance of the <see cref="FloatImage"/> class.
@@ -116,6 +133,50 @@ public:
     {
         return this->line(line)->sample(sample);
     }
+
+    /// <summary>
+    /// Gets the sample at the given position
+    /// </summary>
+    /// <param name="sample">The sample.</param>
+    /// <returns>sample_t &.</returns>
+    inline line_t& operator[](const lines_t& line) const
+    {
+        return _image[line];
+    }
+
+    /// <summary>
+    /// Sets the specified sample to the given value.
+    /// </summary>
+    /// <param name="sample">The sample.</param>
+    /// <param name="line">The line.</param>
+    /// <param name="value">The value.</param>
+    inline void set(const samples_t& sample, const lines_t& line, const sample_t& value)
+    {
+        _image[line]->sample(sample) = value;
+    }
+
+    /// <summary>
+    /// Converts a float image to OpenCV
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="samples">The number of samples.</param>
+    /// <param name="lines">The number of lines.</param>
+    /// <param name="bands">The number of bands.</param>
+    /// <returns>The converted image</returns>
+    inline IplImagePtr toOpenCv(const sample_t& min, const sample_t& max) const
+    {
+        return toOpenCv(0, samples-1, 0, lines-1, min, max);
+    }
+
+    /// <summary>
+    /// Converts a float image to OpenCV
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="samples">The number of samples.</param>
+    /// <param name="lines">The number of lines.</param>
+    /// <param name="bands">The number of bands.</param>
+    /// <returns>The converted image</returns>
+    IplImagePtr toOpenCv(const samples_t& sample_first, const samples_t& sample_last, const lines_t& line_first, const lines_t& line_last, const sample_t& min, const sample_t& max) const;
 };
 
 #endif

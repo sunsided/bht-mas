@@ -65,8 +65,12 @@ void Application::run()
     inputFile.close();
     
     unique_ptr<FloatImage> image(new FloatImage(100, 100, true));
+    image->set(50, 50, 1.0f);
+
+    auto openCvImage = image->toOpenCv(0, 1.0F);
 
     OpenCvWindow& window = createWindow("Trololo");
+    window.showImage(openCvImage);
 
     cvWaitKey(0);
 }
