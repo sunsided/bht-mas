@@ -47,6 +47,15 @@ public:
     }
 
     /// <summary>
+    /// Gets a pointer to the samples.
+    /// </summary>
+    /// <returns>sample_t *.</returns>
+    inline sample_t* get_samples() const 
+    {
+        return _line.get();
+    }
+
+    /// <summary>
     /// Gets the sample at the given position
     /// </summary>
     /// <param name="sample">The sample.</param>
@@ -177,6 +186,14 @@ public:
     /// <param name="bands">The number of bands.</param>
     /// <returns>The converted image</returns>
     IplImagePtr toOpenCv(const samples_t& sample_first, const samples_t& sample_last, const lines_t& line_first, const lines_t& line_last, const sample_t& min, const sample_t& max) const;
+
+    /// <summary>
+    /// Reads the image from a single-band unsigned 8-bit raw file
+    /// </summary>
+    /// <param name="stream">The input stream.</param>
+    /// <returns>The image</returns>
+    static std::unique_ptr<FloatImage> createFromU8Raw(std::istream& stream, const samples_t& samples, const lines_t& lines);
+
 };
 
 #endif

@@ -109,3 +109,24 @@ IplImagePtr FloatImage::toOpenCv(const samples_t& sample_first, const samples_t&
     }
     return displayImage;
 }
+
+/// <summary>
+/// Reads the image from a single-band unsigned 8-bit raw file
+/// </summary>
+/// <param name="stream">The input stream.</param>
+/// <returns>The image</returns>
+std::unique_ptr<FloatImage> FloatImage::createFromU8Raw(std::istream& stream, const samples_t& samples, const lines_t& lines)
+{
+    FloatImage* image = new FloatImage(samples, lines, 1, false);
+
+    // read the stream
+    // for each line, create the sample array
+    for (lines_t lineIndex = 0; lineIndex < lines; ++lineIndex)
+    {
+        line_t& line = image->line(lineIndex);
+        char* pointer = reinterpret_cast<char*>(line->get_samples());
+        stream.read(pointer, samples*sizeof(sample_t));
+    }
+
+    return unique_ptr<FloatImage>(image);
+}

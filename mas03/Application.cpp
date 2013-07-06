@@ -54,23 +54,32 @@ OpenCvWindow& Application::createWindow(const string& name)
 /// Runs this instance.
 /// </summary>
 void Application::run()
-{
+{   
+    OpenCvWindow& window = createWindow("Trololo");
+
+    /*
+    unique_ptr<FloatImage> image(new FloatImage(100, 100, true));
+    image->set(50, 50, 1.0f);
+    auto openCvImage = image->toOpenCv(0, 1.0F);
+    window.showImage(openCvImage);
+    */
+
+
     // open the input file
-    string filename = "./images/rued_corr_flt.img";
+    string filename = "./images/bild0.raw";
     ifstream inputFile;
     inputFile.open(filename, ios_base::in | ios_base::beg | ios_base::binary);
     if (!inputFile.is_open()) throw runtime_error("Could not open input file");
-    
+
+    // load the image data
+    const samples_t samples = 512;
+    const lines_t lines = 512;
+    auto image = FloatImage::createFromU8Raw(inputFile, samples, lines);
+    auto openCvImage = image->toOpenCv(0.0F, 255.0F);
+    window.showImage(openCvImage);
+
     // close the input file
     inputFile.close();
-    
-    unique_ptr<FloatImage> image(new FloatImage(100, 100, true));
-    image->set(50, 50, 1.0f);
-
-    auto openCvImage = image->toOpenCv(0, 1.0F);
-
-    OpenCvWindow& window = createWindow("Trololo");
-    window.showImage(openCvImage);
 
     cvWaitKey(0);
 }
