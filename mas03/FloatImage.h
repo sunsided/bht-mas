@@ -21,6 +21,10 @@ typedef std::unique_ptr<sample_t[]>   linedata_t;
 class FloatImageLine
 {
 private:
+    /// <summary>The inverse of 255.</summary>
+    static const float inverse255;
+
+private:
     linedata_t _line;
 
 public:
@@ -73,6 +77,28 @@ public:
     inline sample_t& operator[](const samples_t& sample) const
     {
         return _line[sample];
+    }
+    
+    /// <summary>
+    /// Sets a sample while lerp'ing it to the range 0..1
+    /// </summary>
+    /// <param name="sample">The sample.</param>
+    /// <param name="value">The value.</param>
+    inline void lerpSet(const samples_t& sample, const uint8_t value)
+    {
+        _line[sample] = static_cast<float>(value) * inverse255;
+    }
+
+    /// <summary>
+    /// Sets a sample while lerp'ing it to the given range
+    /// </summary>
+    /// <param name="sample">The sample.</param>
+    /// <param name="value">The value.</param>
+    /// <param name="to_min">The target range's minimum value.</param>
+    /// <param name="to_max">The target range's maximum value.</param>
+    inline void lerpSet(const samples_t& sample, const uint8_t value, const sample_t& to_min, const sample_t& to_max)
+    {
+        _line[sample] = static_cast<float>(value) * inverse255 * (to_max - to_min) - to_min;
     }
 };
 

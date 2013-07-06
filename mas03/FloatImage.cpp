@@ -2,6 +2,9 @@
 
 using namespace std;
 
+/// <summary>The inverse of 255.</summary>
+const float FloatImageLine::inverse255 = 1.0F / 255.0F;
+
 /// <summary>
 /// Initializes a new instance of the <see cref="FloatImageLine"/> class.
 /// </summary>
@@ -124,8 +127,15 @@ std::unique_ptr<FloatImage> FloatImage::createFromU8Raw(std::istream& stream, co
     for (lines_t lineIndex = 0; lineIndex < lines; ++lineIndex)
     {
         line_t& line = image->line(lineIndex);
-        char* pointer = reinterpret_cast<char*>(line->get_samples());
-        stream.read(pointer, samples*sizeof(sample_t));
+        
+         // there is only a single band
+        for(samples_t x=0; x<samples; ++x)
+        {
+            char pixel;
+            stream.read(&pixel, sizeof(uint8_t));
+
+            line->lerpSet(x, static_cast<uint8_t>(pixel));
+        }
     }
 
     return unique_ptr<FloatImage>(image);
