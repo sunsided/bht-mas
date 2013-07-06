@@ -75,7 +75,7 @@ void Application::run()
     const samples_t samples = 512;
     const lines_t lines = 512;
     auto image = FloatImage::createFromU8Raw(inputFile, samples, lines);
-    auto openCvImage = image->toOpenCv(0.0F, 255.0F);
+    auto openCvImage = image->toOpenCv();
     window.showImage(openCvImage);
 
     // close the input file
