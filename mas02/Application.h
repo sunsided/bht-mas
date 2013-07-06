@@ -71,9 +71,10 @@ private:
     /// <param name="lines">The number of lines.</param>
     /// <param name="bands">The number of bands.</param>
     /// <returns>The converted image</returns>
-    IplImagePtr enviToOpenCv(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands) const
+    IplImagePtr enviToOpenCv(const envi::image_t& image, const envi::samplecount_t& samples, const envi::linecount_t& lines, const envi::bandcount_t& bands, const envi::sample_t& min = 0.0F, const envi::sample_t& max = 1.0F) const
     {
-        return enviToOpenCv(image, 0, samples-1, 0, lines-1, bands);
+        assert (min < max);
+        return enviToOpenCv(image, 0, samples-1, 0, lines-1, bands, min, max);
     }
     
     /// <summary>
@@ -85,7 +86,7 @@ private:
     /// <param name="bands">The number of bands.</param>
     /// <returns>The converted image</returns>
     IplImagePtr enviToOpenCv(const envi::image_t& image, const envi::samplecount_t& sample_first, const envi::samplecount_t& sample_last, const envi::linecount_t& line_first, 
-        const envi::linecount_t& line_last, const envi::bandcount_t& bands) const;
+        const envi::linecount_t& line_last, const envi::bandcount_t& bands, const envi::sample_t& min = 0.0F, const envi::sample_t& max = 1.0F) const;
 
     /// <summary>
     /// Naive calculation of the statistics

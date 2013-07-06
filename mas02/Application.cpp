@@ -59,11 +59,12 @@ void Application::createWindow(const string& name)
 /// <param name="bands">The number of bands.</param>
 /// <returns>The converted image</returns>
 IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t& sample_first, const samplecount_t& sample_last, const linecount_t& line_first, 
-        const linecount_t& line_last, const bandcount_t& bands) const
+        const linecount_t& line_last, const bandcount_t& bands, const envi::sample_t& min, const envi::sample_t& max) const
 {
     assert(bands == 1);
     assert(sample_last >= sample_first);
     assert(line_last >= line_first);
+    assert (min < max);
    
     samplecount_t samples = sample_last - sample_first + 1;
     linecount_t lines = line_last - line_first + 1;
@@ -86,9 +87,12 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
 
             // pick the sample and convert it to 8-bit unsigned
             sample_t sample = line[x+sample_first];
-            uint_fast8_t value = static_cast<uint_fast8_t>(sample);
+            
+            // lerp the value
+            sample = (sample - min) / (max - min) * 255.0F;
 
             // assign sample (prediction friendly)
+            uint_fast8_t value = static_cast<uint_fast8_t>(sample);
             pixel = value;
 
             // correct in case of problems
@@ -584,21 +588,21 @@ void Application::run()
 
     // calculate low-density statistics
     cout << endl << "Calculating statistics for low-density region ... ";
-    stats = calculateStatistics(image, low_x, low_x+region_width, low_y, low_x+region_height, bands);
+    auto low_stats = calculateStatistics(image, low_x, low_x+region_width, low_y, low_x+region_height, bands);
     cout << "done" << endl;
-    cout << stats << endl;
+    cout << low_stats << endl;
 
     // calculate high-density statistics
-    cout << endl << "Calculating statistics for low-density region ... ";
-    stats = calculateStatistics(image, hi_x, hi_x+region_height, hi_y, hi_y+region_height, bands);
+    cout << endl << "Calculating statistics for high-density region ... ";
+    auto high_stats = calculateStatistics(image, hi_x, hi_x+region_height, hi_y, hi_y+region_height, bands);
     cout << "done" << endl;
-    cout << stats << endl;
+    cout << high_stats << endl;
 
     // convert image to OpenCV image.
     cout << endl << "Converting low and high density regions for display ... ";
-    IplImagePtr lowDensityRegion = enviToOpenCv(image, low_x, low_x+region_width, low_y, low_x+region_height, bands);
-    IplImagePtr highDensityRegion = enviToOpenCv(image, hi_x, hi_x+region_height, hi_y, hi_y+region_height, bands);
-    IplImagePtr displayImage = enviToOpenCv(image, samples, lines, bands);
+    IplImagePtr lowDensityRegion = enviToOpenCv(image, low_x, low_x+region_width, low_y, low_x+region_height, bands, low_stats->min, low_stats->max);
+    IplImagePtr highDensityRegion = enviToOpenCv(image, hi_x, hi_x+region_height, hi_y, hi_y+region_height, bands, high_stats->min, high_stats->max);
+    IplImagePtr displayImage = enviToOpenCv(image, samples, lines, bands, stats->min, stats->max);
     cout << "done" << endl;
     
     // calculate the histogram
