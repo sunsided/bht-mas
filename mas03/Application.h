@@ -80,6 +80,18 @@ private:
     /// <param name="filepath">The filepath.</param>
     /// <returns>image_t.</returns>
     static image_t loadRawU8(const std::string filepath, const samples_t samples, const lines_t lines) throw(std::runtime_error);
+
+    /// <summary>
+    /// Correlates the specified raw image with the mask
+    /// </summary>
+    /// <param name="raw">The raw image.</param>
+    /// <param name="mask">The mask.</param>
+    /// <param name="candidate_x">The candidate x coordinate.</param>
+    /// <param name="candidate_y">The candidate y coordinate.</param>
+    /// <param name="min_coeff">The minimum correlation coefficient.</param>
+    /// <param name="max_coeff">The minimum correlation coefficient.</param>
+    /// <returns>image displaying the correlation coefficients.</returns>
+    static image_t correlate(const image_t& raw, const image_t& mask, out samples_t& candidate_x, out lines_t& candidate_y, out sample_t& min_coeff, out sample_t& max_coeff);
 };
 
 #endif

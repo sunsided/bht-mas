@@ -72,45 +72,24 @@ image_t Application::loadRawU8(const std::string filepath, const samples_t sampl
 }
 
 /// <summary>
-/// Runs this instance.
+/// Correlates the specified raw image with the mask
 /// </summary>
-void Application::run()
-{   
-    // === load the raw data ===
-
-    const samples_t     raw_samples = 512;
-    const lines_t       raw_lines = 512;
-    
-    vector<string> raw_image_paths;
-    raw_image_paths.push_back("./images/bild0.raw");
-    raw_image_paths.push_back("./images/bild1.raw");
-    raw_image_paths.push_back("./images/bild2.raw");
-    raw_image_paths.push_back("./images/bild3.raw");
-    raw_image_paths.push_back("./images/bild4.raw");
-    raw_image_paths.push_back("./images/bild5.raw");
-    raw_image_paths.push_back("./images/bild6.raw");
-
-    vector<image_t> raw_images;
-    for (string path : raw_image_paths)
-    {
-        auto image = loadRawU8(path, raw_samples, raw_lines);
-        raw_images.push_back(std::move(image));
-    }
-    
-    // === load the mask data ===
-
-    const samples_t     mask_samples = 32;
-    const lines_t       mask_lines = 32;
-    auto mask = loadRawU8("./images/mask_32_32.raw", mask_samples, mask_lines);
-
-
-    // === correlate ===
-    cout << "Calculating correlation coefficients ... ";
-
-    image_t& raw = raw_images[2];
-
+/// <param name="raw">The raw image.</param>
+/// <param name="mask">The mask.</param>
+/// <param name="candidate_x">The candidate x coordinate.</param>
+/// <param name="candidate_y">The candidate y coordinate.</param>
+/// <param name="min_coeff">The minimum correlation coefficient.</param>
+/// <param name="max_coeff">The minimum correlation coefficient.</param>
+/// <returns>image displaying the correlation coefficients.</returns>
+image_t Application::correlate(const image_t& raw, const image_t& mask, samples_t& candidate_x, lines_t& candidate_y, sample_t& min_coeff, sample_t& max_coeff)
+{
     // image to hold the coefficients
-    image_t coeffs(new FloatImage(raw_samples, raw_lines, 1, false));
+    image_t coeffs(new FloatImage(raw->samples, raw->lines, 1, true));
+
+    const samples_t raw_samples     = raw->samples;
+    const lines_t raw_lines         = raw->lines;
+    const samples_t mask_samples    = mask->samples;
+    const lines_t mask_lines        = mask->lines;
 
     // get mask mean value
     const sample_t invMaskCount = 1.0F / (static_cast<sample_t>(mask_lines * mask_samples));
@@ -132,7 +111,7 @@ void Application::run()
 
     // iterate over all pixels
     const omp_linecount_t bottommost_exclusive = omp_lines - mask_lines;
-    const sample_t rightmost_exclusive = raw_samples - mask_samples;
+    const samples_t rightmost_exclusive = raw_samples - mask_samples;
 
     #pragma omp parallel for
     for (omp_linecount_t y = 0; y < bottommost_exclusive; ++y)
@@ -201,9 +180,10 @@ void Application::run()
     cout << "done." << endl;
 
     // find minimum and maximum coefficients
-    sample_t min_coeff = FLT_MAX, max_coeff = FLT_MIN;
-    samples_t max_match_x = 0;
-    samples_t max_match_y = 0;
+    min_coeff = FLT_MAX;
+    max_coeff = FLT_MIN;
+    candidate_x = 0;
+    candidate_y = 0;
     for (omp_linecount_t y = 0; y < bottommost_exclusive; ++y)
     {
         line_t &coeffs_line = coeffs->line(y);
@@ -219,11 +199,60 @@ void Application::run()
             {
                 max_coeff = sample;
 
-                max_match_x = x;
-                max_match_y = y;
+                candidate_x = x;
+                candidate_y = y;
+
+                // THEORY: filtering out values that are the local maximum within the neighbourhood of the mask's size yields all candidates
+                // THEORY: applying median segmentation of the grey levels of all candidates yields strong candidates
             }
         }
     }
+
+    return coeffs;
+}
+
+/// <summary>
+/// Runs this instance.
+/// </summary>
+void Application::run()
+{   
+    // === load the raw data ===
+
+    const samples_t     raw_samples = 512;
+    const lines_t       raw_lines = 512;
+    
+    vector<string> raw_image_paths;
+    raw_image_paths.push_back("./images/bild0.raw");
+    raw_image_paths.push_back("./images/bild1.raw");
+    raw_image_paths.push_back("./images/bild2.raw");
+    raw_image_paths.push_back("./images/bild3.raw");
+    raw_image_paths.push_back("./images/bild4.raw");
+    raw_image_paths.push_back("./images/bild5.raw");
+    raw_image_paths.push_back("./images/bild6.raw");
+
+    vector<image_t> raw_images;
+    for (string path : raw_image_paths)
+    {
+        auto image = loadRawU8(path, raw_samples, raw_lines);
+        raw_images.push_back(std::move(image));
+    }
+    
+    // === load the mask data ===
+
+    const samples_t     mask_samples = 32;
+    const lines_t       mask_lines = 32;
+    auto mask = loadRawU8("./images/mask_32_32.raw", mask_samples, mask_lines);
+
+
+    // === correlate ===
+    cout << "Calculating correlation coefficients ... ";
+
+    image_t& raw = raw_images[2];
+
+    sample_t min_coeff = FLT_MAX, max_coeff = FLT_MIN;
+    samples_t max_match_x = 0;
+    samples_t max_match_y = 0;
+    auto coeffs = correlate(raw, mask, max_match_x, max_match_y, min_coeff, max_coeff);
 
     cout << "correlation coefficient in range " << min_coeff << " .. " << max_coeff << endl;
     cout << "maximum match at {" << to_string(max_match_x) << ", " << to_string(max_match_y) << "}" << endl;
