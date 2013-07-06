@@ -53,14 +53,13 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
             char& pixel = displayImage->imageData[lineOffset+x];
 
             // pick the sample and convert it to 8-bit unsigned
-            sample_t sample = line[x+sample_first];
+            const sample_t input_sample = line[x+sample_first];
             
             // lerp the value
-            sample = (sample - min) * lerp_scaling;
+            sample_t sample = (input_sample - min) * lerp_scaling;
 
             // assign sample (prediction friendly)
-            uint_fast8_t value = static_cast<uint_fast8_t>(sample);
-            pixel = value;
+            pixel = static_cast<uint_fast8_t>(sample);
 
             // correct in case of problems
             if (sample < 0.0F) {
@@ -88,8 +87,8 @@ image_t Application::scaleDownLinear(const image_t& image, const samplecount_t& 
     assert(scaleFactor >= 1.0F);
 
     float invScaleFactor = 1.0F/scaleFactor;
-    samplecount_t new_samples = samples * invScaleFactor;
-    samplecount_t new_lines = lines * invScaleFactor;
+    samplecount_t new_samples = static_cast<samplecount_t>(samples * invScaleFactor);
+    linecount_t new_lines = static_cast<linecount_t>(lines * invScaleFactor);
 
     // === perpare copy ===
 
@@ -108,16 +107,17 @@ image_t Application::scaleDownLinear(const image_t& image, const samplecount_t& 
 
     typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
     omp_linecount_t omp_lines = lines;
+    
     omp_linecount_t omp_line_skip = static_cast<omp_linecount_t>(scaleFactor);
-    assert(omp_line_skip >= 1.0F);
-
     samplecount_t sample_skip = static_cast<samplecount_t>(scaleFactor);
-
-    linecount_t target_y = 0;
-
-    // #pragma omp parallel for
+    assert(omp_line_skip >= 1.0F);
+    assert(sample_skip >= 1.0F);
+    
+    #pragma omp parallel for
     for(omp_linecount_t y=0; y<omp_lines; y += omp_line_skip)
     {
+        linecount_t target_y = static_cast<linecount_t>(y * invScaleFactor);
+
         const line_t& source_line = image[y];
         line_t& target_line = target[target_y];
         samplecount_t target_x = 0;

@@ -131,9 +131,17 @@ void Application::run()
     }
     
     // scaling
-    const float scaleFactor = 10;
+    const float scaleFactor = 5;
+    cout << endl << "Scaling image ... ";
     auto scaled = scaleDownLinear(image, samples, lines, bands, scaleFactor);
-    auto cvscaled = enviToOpenCv(scaled, static_cast<samplecount_t>(samples/scaleFactor), static_cast<linecount_t>(lines/scaleFactor), bands, stats->min, stats->max);
+    cout << "done" << endl;
+
+    cout << "Converting scaled image ... ";
+    auto cvscaled       = enviToOpenCv(scaled, static_cast<samplecount_t>(samples/scaleFactor), static_cast<linecount_t>(lines/scaleFactor), bands, stats->min, stats->max);
+    auto cvscaledLow    = enviToOpenCv(scaled, static_cast<samplecount_t>(samples/scaleFactor), static_cast<linecount_t>(lines/scaleFactor), bands, stats->min, stats->max/4);
+    auto cvscaledHigh   = enviToOpenCv(scaled, static_cast<samplecount_t>(samples/scaleFactor), static_cast<linecount_t>(lines/scaleFactor), bands, stats->max*1/4, stats->max);
+    cout << "done" << endl;
+    
 
     // Display
     createWindow("Original");
@@ -141,7 +149,13 @@ void Application::run()
 
     createWindow("Scaled");
     cvShowImage("Scaled", cvscaled.get());
-
+    
+    createWindow("Scaled Low-Range");
+    cvShowImage("Scaled Low-Range", cvscaledLow.get());
+    
+    createWindow("Scaled High-Range");
+    cvShowImage("Scaled High-Range", cvscaledHigh.get());
+    
     createWindow("Low Density");
     cvShowImage("Low Density", lowDensityRegion.get());
 
