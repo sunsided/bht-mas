@@ -74,6 +74,8 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
     typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
     omp_linecount_t omp_lines = lines;
 
+    const float lerp_scaling = 255.0F / (max - min);
+
     #pragma omp parallel for
     for(omp_linecount_t y=0; y<omp_lines; ++y)
     {
@@ -89,7 +91,7 @@ IplImagePtr Application::enviToOpenCv(const image_t& image, const samplecount_t&
             sample_t sample = line[x+sample_first];
             
             // lerp the value
-            sample = (sample - min) / (max - min) * 255.0F;
+            sample = (sample - min) * lerp_scaling;
 
             // assign sample (prediction friendly)
             uint_fast8_t value = static_cast<uint_fast8_t>(sample);
