@@ -222,4 +222,6 @@ public:
 
 };
 
+typedef std::unique_ptr<FloatImage> image_t;
+
 #endif

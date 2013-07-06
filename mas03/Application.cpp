@@ -51,35 +51,39 @@ OpenCvWindow& Application::createWindow(const string& name)
 }
 
 /// <summary>
+/// Loads a raw 8-bit unsigned single-channel image
+/// </summary>
+/// <param name="filepath">The filepath.</param>
+/// <returns>image_t.</returns>
+image_t Application::loadRawU8(const std::string filepath, const samples_t samples, const lines_t lines)
+{
+    // open the input file
+    ifstream inputFile;
+    inputFile.open(filepath, ios_base::in | ios_base::beg | ios_base::binary);
+    if (!inputFile.is_open()) throw runtime_error("Could not open input file");
+
+    // load the image data
+    auto image = FloatImage::createFromU8Raw(inputFile, samples, lines);
+
+    // close the input file
+    inputFile.close();
+
+    return std::move(image);
+}
+
+/// <summary>
 /// Runs this instance.
 /// </summary>
 void Application::run()
 {   
     OpenCvWindow& window = createWindow("Trololo");
-
-    /*
-    unique_ptr<FloatImage> image(new FloatImage(100, 100, true));
-    image->set(50, 50, 1.0f);
-    auto openCvImage = image->toOpenCv(0, 1.0F);
-    window.showImage(openCvImage);
-    */
-
-
-    // open the input file
-    string filename = "./images/bild0.raw";
-    ifstream inputFile;
-    inputFile.open(filename, ios_base::in | ios_base::beg | ios_base::binary);
-    if (!inputFile.is_open()) throw runtime_error("Could not open input file");
-
+    
     // load the image data
     const samples_t samples = 512;
     const lines_t lines = 512;
-    auto image = FloatImage::createFromU8Raw(inputFile, samples, lines);
+    auto image = loadRawU8("./images/bild0.raw", samples, lines);
     auto openCvImage = image->toOpenCv();
     window.showImage(openCvImage);
-
-    // close the input file
-    inputFile.close();
 
     cvWaitKey(0);
 }
