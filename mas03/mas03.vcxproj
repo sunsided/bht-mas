@@ -83,10 +83,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="FloatImage.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="FloatImage.h" />
     <ClInclude Include="OpenCvImage.h" />
     <ClInclude Include="OpenCvWindow.h" />
   </ItemGroup>

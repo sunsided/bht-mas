@@ -10,6 +10,7 @@
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 
+#include "FloatImage.h"
 #include "Application.h"
 
 using namespace std;
@@ -62,6 +63,8 @@ void Application::run()
     
     // close the input file
     inputFile.close();
+    
+    unique_ptr<FloatImage> image(new FloatImage(100, 100, true));
 
     OpenCvWindow& window = createWindow("Trololo");
 
