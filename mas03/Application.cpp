@@ -366,10 +366,12 @@ void Application::run()
     const lines_t       mask_lines = 32;
     auto mask = loadRawU8("./images/mask_32_32.raw", mask_samples, mask_lines);
 
+    // === select a raw image ===
+    
+    image_t& raw = raw_images[2];
+
     // === correlate ===
     cout << "Calculating correlation coefficients ... ";
-
-    image_t& raw = raw_images[2];
 
     sample_t min_coeff = FLT_MAX, max_coeff = FLT_MIN;
     samples_t corr_max_match_x = 0;
