@@ -92,6 +92,43 @@ private:
     /// <param name="max_coeff">The minimum correlation coefficient.</param>
     /// <returns>image displaying the correlation coefficients.</returns>
     static image_t correlate(const image_t& raw, const image_t& mask, out samples_t& candidate_x, out lines_t& candidate_y, out sample_t& min_coeff, out sample_t& max_coeff);
+
+    /// <summary>
+    /// Marks the candidate in an OpenCV BGR image.
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="candidate_x">The candidate x position.</param>
+    /// <param name="candidate_y">The candidate y position.</param>
+    /// <param name="samples">The samples.</param>
+    /// <param name="lines">The lines.</param>
+    /// <param name="pixel_offset">The color code; 2 = red, 1 = green, 0 = blue.</param>
+    static void markCandidateInOpenCvBGR(IplImagePtr& image, const samples_t& candidate_x, const lines_t& candidate_y, const samples_t& samples, const lines_t& lines, const uint8_t pixel_offset = 2);
+
+    /// <summary>
+    /// Marks the candidate in an OpenCV BGR image in red.
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="candidate_x">The candidate x position.</param>
+    /// <param name="candidate_y">The candidate y position.</param>
+    /// <param name="samples">The samples.</param>
+    /// <param name="lines">The lines.</param>
+    static inline void markCandidateInOpenCvBGRInRed(IplImagePtr& image, const samples_t& candidate_x, const lines_t& candidate_y, const samples_t& samples, const lines_t& lines)
+    {
+        markCandidateInOpenCvBGR(image, candidate_x, candidate_y, samples, lines, 2);
+    }
+
+    /// <summary>
+    /// Marks the candidate in an OpenCV BGR image in green.
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="candidate_x">The candidate x position.</param>
+    /// <param name="candidate_y">The candidate y position.</param>
+    /// <param name="samples">The samples.</param>
+    /// <param name="lines">The lines.</param>
+    static inline void markCandidateInOpenCvBGRInGreen(IplImagePtr& image, const samples_t& candidate_x, const lines_t& candidate_y, const samples_t& samples, const lines_t& lines)
+    {
+        markCandidateInOpenCvBGR(image, candidate_x, candidate_y, samples, lines, 1);
+    }
 };
 
 #endif

@@ -212,6 +212,43 @@ image_t Application::correlate(const image_t& raw, const image_t& mask, samples_
 }
 
 /// <summary>
+/// Marks the candidate in an OpenCV BGR image in red.
+/// </summary>
+/// <param name="image">The image.</param>
+/// <param name="candidate_x">The candidate x position.</param>
+/// <param name="candidate_y">The candidate y position.</param>
+/// <param name="samples">The samples.</param>
+/// <param name="lines">The lines.</param>
+void Application::markCandidateInOpenCvBGR(IplImagePtr& image, const samples_t& candidate_x, const lines_t& candidate_y, const samples_t& samples, const lines_t& lines, const uint8_t pixel_offset)
+{
+    assert(pixel_offset >= 0 && pixel_offset <= 2);
+
+    // draw horizontal line
+    uint_fast32_t start_sample = candidate_x * 3;
+    for (samples_t x=start_sample; x <start_sample + samples*3; x+=3)
+    {
+        char* top_line = &image->imageData[candidate_y * image->widthStep];
+        char& pixel_top = top_line[x+pixel_offset];
+
+        char* bottom_line = &image->imageData[(candidate_y + lines) * image->widthStep];
+        char& pixel_bot = bottom_line[x+pixel_offset];
+
+        pixel_top = static_cast<char>(255U);
+        pixel_bot = static_cast<char>(255U);
+    }
+
+    // draw vertical line
+    uint_fast32_t start_line = candidate_y*image->widthStep;
+    for (lines_t y=start_line; y <start_line + lines*image->widthStep; y+=image->widthStep)
+    {
+        char& pixel_left = image->imageData[y+ start_sample + pixel_offset];
+        char& pixel_right = image->imageData[y+ start_sample + samples*3 + pixel_offset];
+
+        pixel_left = pixel_right = static_cast<char>(255U);
+    }
+}
+
+/// <summary>
 /// Runs this instance.
 /// </summary>
 void Application::run()
@@ -243,7 +280,6 @@ void Application::run()
     const lines_t       mask_lines = 32;
     auto mask = loadRawU8("./images/mask_32_32.raw", mask_samples, mask_lines);
 
-
     // === correlate ===
     cout << "Calculating correlation coefficients ... ";
 
@@ -264,7 +300,8 @@ void Application::run()
 
     // display raw picture
     OpenCvWindow& corr_coeffs_raw_window = createWindow("raw picture for correlation coefficients");
-    auto raw_cv = raw->toOpenCv();
+    auto raw_cv = raw->toOpenCvBGR();
+    markCandidateInOpenCvBGRInGreen(raw_cv, max_match_x, max_match_y, mask->samples, mask->lines);
     corr_coeffs_raw_window.showImage(raw_cv);
 
     cvWaitKey(0);

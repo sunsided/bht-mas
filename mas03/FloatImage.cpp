@@ -67,6 +67,7 @@ FloatImage::~FloatImage()
 /// <returns>The converted image</returns>
 IplImagePtr FloatImage::toOpenCv(const samples_t& sample_first, const samples_t& sample_last, const lines_t& line_first, const lines_t& line_last, const sample_t& min, const sample_t& max) const
 {
+    assert(bands == 1);
     assert(sample_last >= sample_first);
     assert(line_last >= line_first);
     assert(min < max);
@@ -107,6 +108,68 @@ IplImagePtr FloatImage::toOpenCv(const samples_t& sample_first, const samples_t&
             }
             if (sample > 255.0F) {
                 pixel = (char)255;
+            }
+        }
+    }
+    return displayImage;
+}
+
+/// <summary>
+/// Converts a float image to OpenCV
+/// </summary>
+/// <param name="image">The image.</param>
+/// <param name="samples">The number of samples.</param>
+/// <param name="lines">The number of lines.</param>
+/// <param name="bands">The number of bands.</param>
+/// <returns>The converted image</returns>
+IplImagePtr FloatImage::toOpenCvBGR(const samples_t& sample_first, const samples_t& sample_last, const lines_t& line_first, const lines_t& line_last, const sample_t& min, const sample_t& max) const
+{
+    assert(bands == 1);
+    assert(sample_last >= sample_first);
+    assert(line_last >= line_first);
+    assert(min < max);
+   
+    samples_t samples = sample_last - sample_first + 1;
+    lines_t lines = line_last - line_first + 1;
+    IplImagePtr displayImage(cvCreateImage(cvSize(samples, lines), IPL_DEPTH_8U, 3));
+    samples_t step = displayImage->widthStep;
+
+    typedef int_fast32_t omp_linecount_t; // OpenMP needs signed integral type
+    omp_linecount_t omp_lines = lines;
+
+    const float lerp_scaling = 255.0F / (max - min);
+
+    #pragma omp parallel for
+    for(omp_linecount_t y=0; y<omp_lines; ++y)
+    {
+        line_t& line = _image[y+line_first];
+        uint_fast32_t lineOffset = y*(step);
+        uint_fast32_t target_x = 0;
+
+        // TODO: when multiple bands are needed, implement another loop or specific behaviour for regular band counts (1, 3, 4)
+        for(samples_t x=0; x<samples; ++x)
+        {
+            char& pixel_b = displayImage->imageData[lineOffset + target_x++];
+            char& pixel_g = displayImage->imageData[lineOffset + target_x++];
+            char& pixel_r = displayImage->imageData[lineOffset + target_x++];
+
+            // pick the sample and convert it to 8-bit unsigned
+            const sample_t input_sample = line->sample(x+sample_first);
+            
+            // lerp the value
+            sample_t sample = (input_sample - min) * lerp_scaling;
+
+            // assign sample (prediction friendly)
+            pixel_r = static_cast<uint_fast8_t>(sample);
+            pixel_b = pixel_r;
+            pixel_g = pixel_r;
+
+            // correct in case of problems
+            if (sample < 0.0F) {
+                pixel_r = 0;
+            }
+            if (sample > 255.0F) {
+                pixel_r = (char)255;
             }
         }
     }

@@ -214,6 +214,29 @@ public:
     IplImagePtr toOpenCv(const samples_t& sample_first, const samples_t& sample_last, const lines_t& line_first, const lines_t& line_last, const sample_t& min = 0.0F, const sample_t& max = 1.0F) const;
 
     /// <summary>
+    /// Converts a float image to OpenCV
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="samples">The number of samples.</param>
+    /// <param name="lines">The number of lines.</param>
+    /// <param name="bands">The number of bands.</param>
+    /// <returns>The converted image</returns>
+    inline IplImagePtr toOpenCvBGR(const sample_t& min = 0.0F, const sample_t& max = 1.0F) const
+    {
+        return toOpenCvBGR(0, samples-1, 0, lines-1, min, max);
+    }
+
+    /// <summary>
+    /// Converts a float image to OpenCV
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="samples">The number of samples.</param>
+    /// <param name="lines">The number of lines.</param>
+    /// <param name="bands">The number of bands.</param>
+    /// <returns>The converted image</returns>
+    IplImagePtr toOpenCvBGR(const samples_t& sample_first, const samples_t& sample_last, const lines_t& line_first, const lines_t& line_last, const sample_t& min = 0.0F, const sample_t& max = 1.0F) const;
+
+    /// <summary>
     /// Reads the image from a single-band unsigned 8-bit raw file
     /// </summary>
     /// <param name="stream">The input stream.</param>
