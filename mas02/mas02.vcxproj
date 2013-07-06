@@ -83,6 +83,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="Application_Histogram.cpp" />
+    <ClCompile Include="Application_ImageExtraction.cpp" />
+    <ClCompile Include="Application_Statistics.cpp" />
     <ClCompile Include="ENVIFileReader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Stats.cpp" />
