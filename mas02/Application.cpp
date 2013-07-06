@@ -450,32 +450,61 @@ void Application::run()
     inputFile.close();
 
     // calculate naive statistics
-    cout << "Calculating statistics (naive) ... ";
+    cout << endl << "Calculating statistics (naive) ... ";
     auto stats = calculateStatisticsNaive(image, samples, lines, bands);
     cout << "done" << endl;
     cout << stats << endl;
 
     // calculate naive d/c statistics
-    cout << "Calculating statistics (naive divide-and-conquer) ... ";
+    cout << endl << "Calculating statistics (naive divide-and-conquer) ... ";
     stats = calculateStatisticsNaiveDivideConquer(image, samples, lines, bands);
     cout << "done" << endl;
     cout << stats << endl;
 
     // calculate forward statistics
-    cout << "Calculating statistics (forward d&q) ... ";
+    cout << endl << "Calculating statistics (forward d&q) ... ";
     stats = calculateStatisticsForward(image, samples, lines, bands);
     cout << "done" << endl;
     cout << stats << endl;
 
+    // low- and high density regions
+    samplecount_t region_width = 500;
+    linecount_t   region_height = 500;
+
+    samplecount_t low_x = 200;
+    linecount_t   low_y = 200;
+
+    samplecount_t hi_x  = 2000;
+    linecount_t   hi_y  = 800;
+
+    // calculate low-density statistics
+    cout << endl << "Calculating statistics for low-density region ... ";
+    stats = calculateStatistics(image, low_x, low_x+region_width, low_y, low_x+region_height, bands);
+    cout << "done" << endl;
+    cout << stats << endl;
+
+    // calculate high-density statistics
+    cout << endl << "Calculating statistics for low-density region ... ";
+    stats = calculateStatistics(image, hi_x, hi_x+region_height, hi_y, hi_y+region_height, bands);
+    cout << "done" << endl;
+    cout << stats << endl;
+
     // convert image to OpenCV image.
-    cout << "Converting low and high density regions for display ... ";
-    IplImagePtr lowDensityRegion = enviToOpenCv(image, 200, 700, 200, 700, bands);
+    cout << endl << "Converting low and high density regions for display ... ";
+    IplImagePtr lowDensityRegion = enviToOpenCv(image, low_x, low_x+region_width, low_y, low_x+region_height, bands);
+    IplImagePtr highDensityRegion = enviToOpenCv(image, hi_x, hi_x+region_height, hi_y, hi_y+region_height, bands);
     IplImagePtr displayImage = enviToOpenCv(image, samples, lines, bands);
     cout << "done" << endl;
 
     // Display
     createWindow("Original");
     cvShowImage("Original", displayImage.get());
+
+    createWindow("Low Density");
+    cvShowImage("Low Density", lowDensityRegion.get());
+
+    createWindow("High Density");
+    cvShowImage("High Density", highDensityRegion.get());
 
     cvWaitKey(0);
 }
