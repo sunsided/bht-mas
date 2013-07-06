@@ -76,14 +76,38 @@ image_t Application::loadRawU8(const std::string filepath, const samples_t sampl
 /// </summary>
 void Application::run()
 {   
-    OpenCvWindow& window = createWindow("Trololo");
-    
     // load the image data
-    const samples_t samples = 512;
-    const lines_t lines = 512;
-    auto image = loadRawU8("./images/bild0.raw", samples, lines);
-    auto openCvImage = image->toOpenCv();
-    window.showImage(openCvImage);
+    const samples_t     raw_samples = 512;
+    const lines_t       raw_lines = 512;
+    
+    vector<string> raw_image_paths;
+    raw_image_paths.push_back("./images/bild0.raw");
+    raw_image_paths.push_back("./images/bild1.raw");
+    raw_image_paths.push_back("./images/bild2.raw");
+    raw_image_paths.push_back("./images/bild3.raw");
+    raw_image_paths.push_back("./images/bild4.raw");
+    raw_image_paths.push_back("./images/bild5.raw");
+    raw_image_paths.push_back("./images/bild6.raw");
 
-    cvWaitKey(0);
+    vector<image_t> raw_images;
+    for (string path : raw_image_paths)
+    {
+        auto image = loadRawU8(path, raw_samples, raw_lines);
+        raw_images.push_back(std::move(image));
+    }
+    
+    OpenCvWindow& window = createWindow("Trololo");
+    bool break_loop = false;
+
+    while (!break_loop)
+    for (image_t& image : raw_images)
+    {
+        auto openCvImage = image->toOpenCv();
+        window.showImage(openCvImage);
+        int key = cvWaitKey(33);
+        
+        // leave display loop
+        break_loop = key >= 0;
+        if (break_loop) break;
+    }
 }
