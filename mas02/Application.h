@@ -3,6 +3,7 @@
 
 #pragma warning( disable : 4290 ) // disable throw() not implemented by MSVC
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -154,6 +155,15 @@ private:
     {
         return calculateStatisticsForward(image, sample_first, sample_last, line_first, line_last, bands);
     }
+
+    /// <summary>
+    /// Builds the histogram.
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="class_count">The number of classes.</param>
+    /// <returns>The classes.</returns>
+    std::unique_ptr<float[]> buildHistogram(const envi::image_t& image, const envi::samplecount_t& samples, const envi::samplecount_t& lines, const envi::bandcount_t& bands, 
+        const stats_t low_value, const stats_t high_value, const uint_fast8_t class_count = 10) const;
 };
 
 #endif
