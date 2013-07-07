@@ -443,9 +443,9 @@ void Application::run()
 
     // === display median filtered picture ===
 
-    OpenCvWindow& window_media = createWindow("median filtered");
+    OpenCvWindow& window_median = createWindow("median filtered");
     auto median_cv = applyMedianFilter(raw, 5);
-    window_media.showImage(median_cv);
+    window_median.showImage(median_cv);
     cvWaitKey(1);
 
 
