@@ -126,6 +126,14 @@ private:
     /// <param name="pepper_value">The pepper value (low value).</param>
     /// <param name="salt_value">The salt value (high value).</param>
     static void applySnP(image_t& image, const float pepper_probability = 0.01F, const float salt_probability = 0.01F, const sample_t& pepper_value = 0.0F, const sample_t& salt_value = 1.0F);
+
+    /// <summary>
+    /// Applies a median filter of the given size.
+    /// </summary>
+    /// <param name="raw">The image.</param>
+    /// <param name="size">The kernel size, must be an odd number.</param>
+    /// <returns>The filtered image.</returns>
+    static IplImagePtr applyMedianFilter(const image_t& raw, const uint_fast8_t size = 3);
 };
 
 #endif

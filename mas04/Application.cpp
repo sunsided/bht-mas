@@ -259,6 +259,118 @@ void Application::applySnP(image_t& image, const float pepper_probability, const
 }
 
 /// <summary>
+/// Implements a bubble sort algorithm
+/// </summary>
+/// <param name="samples">The samples to be sorted in place.</param>
+void bubbleSort(vector<sample_t>& samples)
+{
+    uint_fast16_t count = samples.size();
+    assert (count > 0);
+
+    bool values_swapped;
+    do 
+    {
+        values_swapped = false;
+        for (uint_fast16_t c = 0; c < count-1; ++c)
+        {
+            if (samples[c] > samples[c+1])
+            {
+                swap(samples[c], samples[c+1]);
+                values_swapped = true;
+            }
+        }
+    } while(values_swapped);
+}
+
+/// <summary>
+/// Convolves the image with the given kernel.
+/// </summary>
+/// <param name="kernel">The kernel.</param>
+/// <returns>The convolved image.</returns>
+IplImagePtr Application::applyMedianFilter(const image_t& raw, const uint_fast8_t size)
+{
+    assert (raw->bands == 1);
+    assert ((size & 0x1) == 0x1); // size must be odd
+
+    // image to hold the convolved image
+    image_t target(new FloatImage(raw->samples, raw->lines, raw->bands, false));
+
+    const samples_t raw_samples     = raw->samples;
+    const lines_t raw_lines         = raw->lines;
+    
+    const ssamples_t kernel_halfsamples = static_cast<slines_t>(size) / 2;
+    const slines_t kernel_halflines = static_cast<slines_t>(size) / 2;
+
+    vector<sample_t> kernel_samples;
+
+    // OpenMP needs signed integral type
+    typedef int_fast32_t omp_linecount_t;
+    omp_linecount_t omp_lines = raw_lines;
+
+    //#pragma omp parallel for
+    for (omp_linecount_t y = 0; y < omp_lines; ++y)
+    {
+        line_t &target_line = target->line(y);
+
+        // loop over all samples
+        for (samples_t x = 0; x < raw_samples; ++x)
+        {
+            // correlate the pixels in mask-space (in the area overlayed by the mask)
+            sample_t sample_value = 0.0F;
+            sample_t kernel_sum = 0.0F;
+
+            for (lines_t my = 0; my < size; ++my) // loop all lines in kernel-space
+            {
+                // calculate the image line
+                slines_t raw_y = y + my - kernel_halflines;
+
+                // grab the kernel and image lines assuming they're valid
+                const line_t &raw_line = raw->line(raw_y);
+                
+                // branch prediction will (have to) save us.
+                // THEORY: Operation might be faster if we handle special cases for the edges and corners (i.e. image boundary overlaps)
+                if (raw_y < 0) continue;
+                if (static_cast<lines_t>(raw_y) >= raw->lines) continue;
+                
+                // loop over pixels (in kernel-space)
+                for (samples_t mx = 0; mx < size; ++mx)
+                {
+                    // calculate the image line
+                    slines_t raw_x = x + mx - kernel_halfsamples;
+
+                    // grab the kernel and image lines assuming they're valid
+                    const sample_t &raw_sample = raw_line->sample(raw_x);
+
+                    // branch prediction to the rescue
+                    // THEORY: same as above
+                    if (raw_x < 0) continue;
+                    if (static_cast<samples_t>(raw_x) >= raw->samples) continue;
+
+                    // take sample
+                    kernel_samples.push_back(raw_sample);
+                }
+            }
+
+            // sort samples
+            uint_fast16_t sample_count = kernel_samples.size();
+            assert(sample_count > 0);
+            bubbleSort(kernel_samples);
+
+            // pick median value
+            sample_t median = kernel_samples[sample_count/2];
+
+            // set value (adjust to effective summed kernel values)
+            target_line->sample(x) = median;
+
+            // discard samples
+            kernel_samples.clear();
+        }
+    }
+    
+    return target->toOpenCv();
+}
+
+/// <summary>
 /// Runs this instance.
 /// </summary>
 void Application::run()
@@ -328,6 +440,14 @@ void Application::run()
     auto log_cv = convolveLoG(raw);
     window_log.showImage(log_cv);
     cvWaitKey(1);
+
+    // === display median filtered picture ===
+
+    OpenCvWindow& window_media = createWindow("median filtered");
+    auto median_cv = applyMedianFilter(raw, 5);
+    window_media.showImage(median_cv);
+    cvWaitKey(1);
+
 
     cvWaitKey(0);
 }
