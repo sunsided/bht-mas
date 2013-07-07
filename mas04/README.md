@@ -26,7 +26,7 @@ Using the 3x3 box filter kernel
 
 ### Highpass: Laplacian Filter
 
-Using the 3x3 laplacian kernel
+Using the 3x3 [laplacian kernel](http://en.wikipedia.org/wiki/Discrete_Laplace_operator)
     
     | 0 |  1 | 0 |
     | 1 | -4 | 1 |
@@ -34,7 +34,9 @@ Using the 3x3 laplacian kernel
 
 ### Highpass: Laplacian-of-Gaussian Filter
 
-Derived by multiplying the aforementioned laplacian filter by the 3x3 gaussian kernel
+The LoG kernel ([Marr-Hildreth algorithm](http://en.wikipedia.org/wiki/Marr%E2%80%93Hildreth_algorithm)) is the application of same-sized laplacian and gaussian kernels in sequence (in either combination, i.e. laplacian first, then gaussian or gaussian first, then laplacian). 
+
+The kernel used was derived by multiplying the aforementioned laplacian filter kernel by the 3x3 [gaussian kernel](http://en.wikipedia.org/wiki/Gaussian_filter)
     
     | 1 | 2 | 1 |
     | 2 | 4 | 2 |
