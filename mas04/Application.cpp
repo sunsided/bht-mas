@@ -478,48 +478,56 @@ void Application::run()
 
     OpenCvWindow& window_noise = createWindow("noisy picture");
     window_noise.showImage(noise_cv);
+    cvSaveImage("./mas04_noise.jpg", noise_cv.get());
     cvWaitKey(1);
 
     // === display dirac convolved picture ===
 
     OpenCvWindow& window_dirac = createWindow("3x3 dirac");
     window_dirac.showImage(dirac_cv);
+    cvSaveImage("./mas04_dirac_3x3.jpg", dirac_cv.get());
     cvWaitKey(1);
 
     // === display box convolved picture ===
 
     OpenCvWindow& window_box = createWindow("3x3 box");
     window_box.showImage(box_cv);
+    cvSaveImage("./mas04_box_3x3.jpg", box_cv.get());
     cvWaitKey(1);
 
     // === display box gaussien picture ===
 
     OpenCvWindow& window_gaussian = createWindow("5x5 gaussian");
     window_gaussian.showImage(gaussian_cv);
+    cvSaveImage("./mas04_gaussian_5x4.jpg", gaussian_cv.get());
     cvWaitKey(1);
 
     // === display laplace convolved picture ===
 
     OpenCvWindow& window_laplace = createWindow("3x3 laplacian");
     window_laplace.showImage(laplacian_cv);
+    cvSaveImage("./mas04_laplacian_3x3.jpg", laplacian_cv.get());
     cvWaitKey(1);
     
     // === display LoG convolved picture ===
 
     OpenCvWindow& window_log = createWindow("5x5 laplacian-of-gaussian");
     window_log.showImage(log_cv);
+    cvSaveImage("./mas04_log_5x5.jpg", log_cv.get());
     cvWaitKey(1);
 
     // === display median filtered picture ===
 
     OpenCvWindow& window_median = createWindow("3x3 median filtered");
     window_median.showImage(median_cv);
+    cvSaveImage("./mas04_median_3x3.jpg", median_cv.get());
     cvWaitKey(1);
 
     // === display laplacian filtered median filtered picture ===
 
     OpenCvWindow& window_median_laplacian = createWindow("3x3 laplacian of 3x3 median filtered");
     window_median_laplacian.showImage(median_laplacian_cv);
+    cvSaveImage("./mas04_dirac_3x3_of_median_3x3.jpg", median_laplacian_cv.get());
     cvWaitKey(1);
 
 

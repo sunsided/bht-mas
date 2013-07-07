@@ -386,6 +386,7 @@ void Application::run()
     OpenCvWindow& corr_coeffs_window = createWindow("correlation coefficients");
     auto corr_coeff_cv = corr_coeffs->toOpenCv(0.0F, max_coeff); // ignoring all negative correlation coefficients
     corr_coeffs_window.showImage(corr_coeff_cv);
+    cvSaveImage("./mas03_corr_coeffs.jpg", corr_coeff_cv.get());
 
     // === build difference ===
 
@@ -404,6 +405,7 @@ void Application::run()
     OpenCvWindow& diff_coeffs_window = createWindow("difference coefficients");
     auto diff_coeff_cv = diff_coeffs->toOpenCv(0.0F, max_coeff); // ignoring all negative correlation coefficients
     diff_coeffs_window.showImage(diff_coeff_cv);
+    cvSaveImage("./mas03_diff_coeffs.jpg", diff_coeff_cv.get());
 
     // === display raw picture ===
 
@@ -413,6 +415,7 @@ void Application::run()
     markCandidateInOpenCvBGRInRed(raw_cv, corr_max_match_x, corr_max_match_y, mask->samples, mask->lines);
     markCandidateInOpenCvBGRInGreen(raw_cv, diff_max_match_x, diff_max_match_y, mask->samples, mask->lines);
     corr_coeffs_raw_window.showImage(raw_cv);
+    cvSaveImage("./mas03_match_mark.jpg", raw_cv.get());
 
     cvWaitKey(0);
 

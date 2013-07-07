@@ -89,7 +89,7 @@ int main(void)
     // Bild anzeigen und speichern
     cvShowImage("original image", img1.get());
     cvShowImage("processed image", img2.get());
-    cvSaveImage("./mas01_lena_modified.jpg", img1.get());
+    cvSaveImage("./mas01_lena_modified.jpg", img2.get());
 
     // Freigeben	
     cvWaitKey(0);

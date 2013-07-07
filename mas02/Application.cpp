@@ -149,19 +149,23 @@ void Application::run()
 
     createWindow("Scaled");
     cvShowImage("Scaled", cvscaled.get());
+    cvSaveImage("./mas02_scaled.jpg", cvscaled.get());
     
     createWindow("Scaled Low-Range");
     cvShowImage("Scaled Low-Range", cvscaledLow.get());
+    cvSaveImage("./mas02_scaled_lowrange.jpg", cvscaledLow.get());
     
     createWindow("Scaled High-Range");
     cvShowImage("Scaled High-Range", cvscaledHigh.get());
+    cvSaveImage("./mas02_scaled_highrange.jpg", cvscaledHigh.get());
     
     createWindow("Low Density");
     cvShowImage("Low Density", lowDensityRegion.get());
+    cvSaveImage("./mas02_lowdensity.jpg", lowDensityRegion.get());
 
     createWindow("High Density");
     cvShowImage("High Density", highDensityRegion.get());
-
+    cvSaveImage("./mas02_highdensity.jpg", highDensityRegion.get());
 
     cvWaitKey(0);
 }
