@@ -4,7 +4,7 @@ Bearbeitung der Übungsaufgaben des Kurses *Maschinelles Sehen* bei [Dr.-Ing. An
 
 Die Projekte sind in C++11 (soweit von meinem verwendeten Compiler unterstützt) mittels OpenMP bearbeitet. OpenMP-Unterstützung ist nicht zwingend notwendig, aber empfohlen; Ebenso ist es **nicht** ratsam, die Beispiele in `DEBUG`-Konfiguration zu starten.
 
-Die Projekte verwenden `OpenCV`~2.4.1 für die Darstellung der Ergebnisse.
+Die Projekte verwenden `OpenCV`~2.4.1 für die Darstellung der Ergebnisse und verwendet die Libraries `OpenCV Core` und `OpenCV HighGUI` (`mas01` zusätzlich `OpenCV Image Processing`.) 
 
 ## Parts
 
