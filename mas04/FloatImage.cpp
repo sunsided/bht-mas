@@ -278,7 +278,7 @@ unique_ptr<FloatImage> FloatImage::convolve(const unique_ptr<FloatImage>& kernel
                 
                 // branch prediction will (have to) save us.
                 // THEORY: Operation might be faster if we handle special cases for the edges and corners (i.e. image boundary overlaps)
-                if (raw_y <= 0) continue;
+                if (raw_y < 0) continue;
                 if (static_cast<lines_t>(raw_y) >= lines) continue;
                 
                 // loop over pixels (in kernel-space)
