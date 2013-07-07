@@ -80,6 +80,20 @@ private:
     /// <param name="filepath">The filepath.</param>
     /// <returns>image_t.</returns>
     static image_t loadRawU8(const std::string filepath, const samples_t samples, const lines_t lines) throw(std::runtime_error);
+
+    /// <summary>
+    /// Convolves the image with a dirac (unit) kernel
+    /// </summary>
+    /// <param name="raw">The raw image.</param>
+    /// <returns>The convolved image in OpenCV format.</returns>
+    static IplImagePtr convolveDirac(const image_t& raw);
+
+    /// <summary>
+    /// Convolves the image with a box blur kernel
+    /// </summary>
+    /// <param name="raw">The raw image.</param>
+    /// <returns>The convolved image in OpenCV format.</returns>
+    static IplImagePtr convolveBox(const image_t& raw);
 };
 
 #endif

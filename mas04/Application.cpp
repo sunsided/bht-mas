@@ -72,6 +72,54 @@ image_t Application::loadRawU8(const std::string filepath, const samples_t sampl
 }
 
 /// <summary>
+/// Convolves the image with a dirac (unit) kernel
+/// </summary>
+/// <param name="raw">The raw image.</param>
+/// <returns>The convolved image in OpenCV format.</returns>
+IplImagePtr Application::convolveDirac(const image_t& raw)
+{
+    // === create a 3x3 unit kernel ===
+    
+    auto kernel = FloatImage::create(3, 3, 1, true);
+    kernel->set(1, 1, 1.0F);
+
+    // === convolve with the kernel ===
+    
+    auto convolved = raw->convolve(kernel);
+
+    // === convert to OpenCV ===
+    
+    return convolved->toOpenCv();
+}
+
+/// <summary>
+/// Convolves the image with a box blur kernel
+/// </summary>
+/// <param name="raw">The raw image.</param>
+/// <returns>The convolved image in OpenCV format.</returns>
+IplImagePtr Application::convolveBox(const image_t& raw)
+{
+    // === create a 9x9 box blur kernel ===
+    
+    auto kernel = FloatImage::create(9, 9, 1, false);
+    for (lines_t l=0; l<kernel->lines; ++l)
+    {
+        for (samples_t s=0; s<kernel->samples; ++s)
+        {
+            kernel->set(s, l, 1.0F);
+        }
+    }
+
+    // === convolve with the kernel ===
+    
+    auto convolved = raw->convolve(kernel);
+
+    // === convert to OpenCV ===
+    
+    return convolved->toOpenCv();
+}
+
+/// <summary>
 /// Runs this instance.
 /// </summary>
 void Application::run()
@@ -82,27 +130,27 @@ void Application::run()
     const lines_t       raw_lines = 512;
     auto raw = loadRawU8("./images/lena.raw", raw_samples, raw_lines);
     raw->flipVertical();
-
-    // === create a unit kernel ===
     
-    auto dirac = FloatImage::create(3, 3, 1, true);
-    dirac->set(1, 1, 1.0F);
-
-    // === convolve with the unit kernel ===
-    
-    auto dirac_convolved = raw->convolve(dirac);
-
     // === display raw picture ===
 
     OpenCvWindow& window_raw = createWindow("raw picture");
     auto raw_cv = raw->toOpenCv();
     window_raw.showImage(raw_cv);
+    cvWaitKey(1);
 
-    // === display dirac concovled picture ===
+    // === display dirac convolved picture ===
 
     OpenCvWindow& window_dirac = createWindow("dirac");
-    auto dirac_cv = dirac_convolved->toOpenCv();
+    auto dirac_cv = convolveDirac(raw);
     window_dirac.showImage(dirac_cv);
+    cvWaitKey(1);
+
+    // === display box convolved picture ===
+
+    OpenCvWindow& window_box = createWindow("box");
+    auto box_cv = convolveBox(raw);
+    window_box.showImage(box_cv);
+
 
     cvWaitKey(0);
 }
