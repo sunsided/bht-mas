@@ -1,3 +1,5 @@
+#define USE_REAL_LENA 0
+
 #pragma warning(disable: 4996) // Disable deprecation
 
 #include <algorithm>
@@ -120,6 +122,58 @@ IplImagePtr Application::convolveBox(const image_t& raw)
 }
 
 /// <summary>
+/// Convolves the image with a laplacian (high-pass) kernel
+/// </summary>
+/// <param name="raw">The raw image.</param>
+/// <returns>The convolved image in OpenCV format.</returns>
+IplImagePtr Application::convolveLaplacian(const image_t& raw)
+{
+    // === create a 3x3 laplacian kernel ===
+    
+    auto kernel = FloatImage::create(3, 3, 1, true);
+    kernel->set(0, 0, 0.0F);    kernel->set(0, 1, 1.0F);    kernel->set(0, 2, 0.0F);
+    kernel->set(1, 0, 1.0F);    kernel->set(1, 1, -4.0F);    kernel->set(1, 2, 1.0F);
+    kernel->set(2, 0, 0.0F);    kernel->set(2, 1, 1.0F);    kernel->set(2, 2, 0.0F);
+
+    // === convolve with the kernel ===
+    
+    auto convolved = raw->convolve(kernel);
+
+    // === convert to OpenCV ===
+    
+    return convolved->toOpenCv();
+}
+
+/// <summary>
+/// Convolves the image with a laplacian-of-gaussian (high-pass) kernel
+/// </summary>
+/// <param name="raw">The raw image.</param>
+/// <returns>The convolved image in OpenCV format.</returns>
+IplImagePtr Application::convolveLoG(const image_t& raw)
+{
+    // === create a 3x3 laplacian kernel ===
+    
+    auto kernel = FloatImage::create(5, 5, 1, true);
+    
+    #define VALUE(x, y, v) kernel->set(x, y, static_cast<sample_t>(v))
+
+    // example kernel taken from: http://kurse.fh-regensburg.de/cato/module/bildverarbeitung/pr/modul_5/pdf/hochpass_s4.pdf
+    VALUE(0, 0, 0); VALUE(0, 1,-1); VALUE(0, 2,-2); VALUE(0, 3,-1); VALUE(0, 4, 0);
+    VALUE(1, 0,-1); VALUE(1, 1, 0); VALUE(1, 2, 2); VALUE(1, 3, 0); VALUE(1, 4,-1);
+    VALUE(2, 0,-2); VALUE(2, 1, 2); VALUE(2, 2, 8); VALUE(2, 3, 2); VALUE(2, 4,-2);
+    VALUE(3, 0,-1); VALUE(3, 1, 0); VALUE(3, 2, 2); VALUE(3, 3, 0); VALUE(3, 4,-1);
+    VALUE(4, 0, 0); VALUE(4, 1,-1); VALUE(4, 2,-2); VALUE(4, 3,-1); VALUE(4, 4, 0);
+    
+    // === convolve with the kernel ===
+    
+    auto convolved = raw->convolve(kernel);
+
+    // === convert to OpenCV ===
+    
+    return convolved->toOpenCv();
+}
+
+/// <summary>
 /// Runs this instance.
 /// </summary>
 void Application::run()
@@ -128,8 +182,13 @@ void Application::run()
 
     const samples_t     raw_samples = 512;
     const lines_t       raw_lines = 512;
+
+#if USE_REAL_LENA
     auto raw = loadRawU8("./images/lena.raw", raw_samples, raw_lines);
     raw->flipVertical();
+#else
+    auto raw = loadRawU8("./images/lenaml.raw", raw_samples, raw_lines);
+#endif
     
     // === display raw picture ===
 
@@ -150,7 +209,21 @@ void Application::run()
     OpenCvWindow& window_box = createWindow("box");
     auto box_cv = convolveBox(raw);
     window_box.showImage(box_cv);
+    cvWaitKey(1);
 
+    // === display laplace convolved picture ===
+
+    OpenCvWindow& window_laplace = createWindow("laplacian");
+    auto laplacian_cv = convolveLaplacian(raw);
+    window_laplace.showImage(laplacian_cv);
+    cvWaitKey(1);
+    
+    // === display LoG convolved picture ===
+
+    OpenCvWindow& window_log = createWindow("laplacian-of-gaussian");
+    auto log_cv = convolveLoG(raw);
+    window_log.showImage(log_cv);
+    cvWaitKey(1);
 
     cvWaitKey(0);
 }
