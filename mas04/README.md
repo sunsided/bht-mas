@@ -2,7 +2,7 @@
 
 This project is about image-filtering through kernels.
 
-## Filter Kernels
+## Filter Kernels and Median Filter
 
 All filter kernels are weighted on-the-fly.
 
@@ -55,6 +55,10 @@ The kernel used was derived by multiplying the aforementioned laplacian filter k
     |  0 | -1 | -2 | -1 |  0 |
     
 Since I was too lazy to calculate it myself, I simply used the kernel as it was described [here](http://kurse.fh-regensburg.de/cato/module/bildverarbeitung/pr/modul_5/pdf/hochpass_s4.pdf).
+
+### Median Filter
+
+Implemented by moving a `N`-by-`N` filter window (with `N` being any odd number) over the picture, sorting all values within this window and picking the median. Sorting is done (as requested in the exercise) by using bubble sort.
 
 ## Noise processes
 
