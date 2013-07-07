@@ -20,11 +20,15 @@ Die Projekte verwenden `OpenCV`~2.4.1 für die Darstellung der Ergebnisse.
 
 `mas03` is about feature detection by using image/template cross-correlation and absolute differences.
 
+### `mas04`: Kernel-based Filtering 
+
+`mas04` is about image filtering by using high- and lowpass kernels, as well as a median filter.
+
 ## License
 
 ### General License
 
-Copyright &copy; 2013 Markus Mayer &lt;widemeadows@gmail.com&gt;
+Copyright &copy; 2013 Markus Mayer
 
 State-Space Sandbox is licensed under the EUPL, Version 1.1 or - as soon they will be approved by the European Commission -
 subsequent versions of the EUPL (the "Licence"); you may not use this work except in compliance with the Licence.
@@ -38,4 +42,6 @@ See the Licence for the specific language governing permissions and limitations 
 
 ### License of Images
 
-I do not claim copyright of the images used in these examples, they are used here solely on an academic *fair use* basis. If in doubt consider them to be copyrighted by [Dr.-Ing. Anko Börner](http://www.dlr.de/os/desktopdefault.aspx/tabid-3459/5342_read-13663/sortby-lastname/).
+I do not claim copyright on any of the images used in these examples; They are used here solely on an scientific *fair use* basis (wissenschaftliches Zitat bzw. Kleinzitat gemäß §51 UrhG). Concerning the images `bild0.raw` to `bild1.raw` and `mask_32_32.raw`, as well as `rued_corr_flt.img`, consider them to be copyrighted by [Dr.-Ing. Anko Börner](http://www.dlr.de/os/desktopdefault.aspx/tabid-3459/5342_read-13663/sortby-lastname/). `lena.jpg` and `lena.raw` is our good ol' first lady o' the interwebs, [Lena](http://www.lenna.org).
+
+The image `lenaml.raw` is a histogram adjusted 512x512 pixel greyscale crop from an image copyrighted by Sandra Luedwig ([source](http://www.tagesspiegel.de/weltspiegel/werbinich/lena-meyer-landruth-im-interview-ich-bin-kein-partymensch/8010812.html)), again used under a scientific *fair use* (wissenschaftliches Zitat bzw. Kleinzitat gemäß §51 UrhG).
