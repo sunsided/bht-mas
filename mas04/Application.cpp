@@ -181,7 +181,9 @@ IplImagePtr Application::convolveLoG(const image_t& raw)
 /// Applies an additive white gaussian noise.
 /// </summary>
 /// <param name="image">The image.</param>
-void applyAWGN(image_t& image, const float gain = 1.0F, const float standard_deviation = 1.0F) 
+/// <param name="gain">The noise gain (implicit signal to noise ratio).</param>
+/// <param name="standard_deviation">The noise standard deviation.</param>
+void Application::applyAWGN(image_t& image, const float gain, const float standard_deviation)
 {
     // create the noise distribution
     const float mean = 0.0F;
@@ -204,6 +206,54 @@ void applyAWGN(image_t& image, const float gain = 1.0F, const float standard_dev
             
             const sample_t noise = static_cast<sample_t>(gain * distribution(generator));
             sample += noise;
+        }
+    }
+}
+
+/// <summary>
+/// Applies salt-and-pepper noise
+/// </summary>
+/// <param name="image">The image.</param>
+/// <param name="pepper_probability">The probability of pepper values (0..1).</param>
+/// <param name="salt_probability">The probability of salt values (0..1)</param>
+/// <param name="pepper_value">The pepper value (low value).</param>
+/// <param name="salt_value">The salt value (high value).</param>
+void Application::applySnP(image_t& image, const float pepper_probability, const float salt_probability, const sample_t& pepper_value, const sample_t& salt_value)
+{
+    assert (salt_probability + pepper_probability <= 1.0F);
+
+    // create the noise distribution
+    uniform_real_distribution<float> distribution(0.0F, 1.0F);
+
+    // the generator used
+    default_random_engine generator;
+
+    // define the thresholds
+    const float pepper_threshold = 0.0F + pepper_probability;
+    const float salt_threshold   = 1.0F - salt_probability;
+
+    // apply the noise
+    const samples_t samples = image->samples;
+    const lines_t lines = image->lines;
+    for (lines_t lineIndex = 0; lineIndex < lines; ++lineIndex)
+    {
+        line_t& line = image->line(lineIndex);
+
+        // THEORY: Band agnostic, since samples should contain all bands
+        for(samples_t x=0; x<samples; ++x)
+        {
+            sample_t& sample = line->sample(x);
+            
+            const float noise_percentage = distribution(generator);
+            if (noise_percentage <= pepper_threshold)
+            {
+                sample = pepper_value;
+            }
+            else if (noise_percentage >= salt_threshold)
+            {
+                sample = salt_value;
+            }
+            
         }
     }
 }
@@ -237,6 +287,12 @@ void Application::run()
     const float awgn_gain = 0.5F; // encodes the signal-to-noise ratio
     const float awgn_standard_deviation = 0.125F;
     applyAWGN(raw, awgn_gain, awgn_standard_deviation);
+
+    const float snp_salt = 1.0F;
+    const float snp_pepper = 0.0F;
+    const float snp_salt_probability = 0.01F;
+    const float snp_pepper_probability = 0.01F;
+    applySnP(raw, snp_pepper_probability, snp_salt_probability, snp_salt, snp_pepper);
 
     // === display noisy picture ===
 

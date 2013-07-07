@@ -100,14 +100,32 @@ private:
     /// </summary>
     /// <param name="raw">The raw image.</param>
     /// <returns>The convolved image in OpenCV format.</returns>
-    IplImagePtr convolveLaplacian(const image_t& raw);
+    static IplImagePtr convolveLaplacian(const image_t& raw);
 
     /// <summary>
     /// Convolves the image with a laplacian-of-gaussian (high-pass) kernel
     /// </summary>
     /// <param name="raw">The raw image.</param>
     /// <returns>The convolved image in OpenCV format.</returns>
-    IplImagePtr convolveLoG(const image_t& raw);
+    static IplImagePtr convolveLoG(const image_t& raw);
+
+    /// <summary>
+    /// Applies an additive white gaussian noise.
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="gain">The noise gain (implicit signal to noise ratio).</param>
+    /// <param name="standard_deviation">The noise standard deviation.</param>
+    static void applyAWGN(image_t& image, const float gain = 1.0F, const float standard_deviation = 1.0F);
+
+    /// <summary>
+    /// Applies salt-and-pepper noise
+    /// </summary>
+    /// <param name="image">The image.</param>
+    /// <param name="pepper_probability">The probability of pepper values (0..1).</param>
+    /// <param name="salt_probability">The probability of salt values (0..1)</param>
+    /// <param name="pepper_value">The pepper value (low value).</param>
+    /// <param name="salt_value">The salt value (high value).</param>
+    static void applySnP(image_t& image, const float pepper_probability = 0.01F, const float salt_probability = 0.01F, const sample_t& pepper_value = 0.0F, const sample_t& salt_value = 1.0F);
 };
 
 #endif
