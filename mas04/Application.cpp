@@ -287,7 +287,7 @@ void bubbleSort(vector<sample_t>& samples)
 /// </summary>
 /// <param name="kernel">The kernel.</param>
 /// <returns>The convolved image.</returns>
-IplImagePtr Application::applyMedianFilter(const image_t& raw, const uint_fast8_t size)
+image_t Application::applyMedianFilter(const image_t& raw, const uint_fast8_t size)
 {
     assert (raw->bands == 1);
     assert ((size & 0x1) == 0x1); // size must be odd
@@ -366,8 +366,8 @@ IplImagePtr Application::applyMedianFilter(const image_t& raw, const uint_fast8_
             kernel_samples.clear();
         }
     }
-    
-    return target->toOpenCv();
+
+    return target;
 }
 
 /// <summary>
@@ -398,54 +398,90 @@ void Application::run()
 
     const float awgn_gain = 0.5F; // encodes the signal-to-noise ratio
     const float awgn_standard_deviation = 0.125F;
+
+    cout << "Applying additive white gaussian noise ... ";
     applyAWGN(raw, awgn_gain, awgn_standard_deviation);
+    cout << "done." << endl;
 
     const float snp_salt = 1.0F;
     const float snp_pepper = 0.0F;
     const float snp_salt_probability = 0.01F;
     const float snp_pepper_probability = 0.01F;
+
+    cout << "Applying salt-and-pepper noise ... ";
     applySnP(raw, snp_pepper_probability, snp_salt_probability, snp_salt, snp_pepper);
+    cout << "done." << endl;
+
+    auto noise_cv = raw->toOpenCv();
+
+    // === convolve images ===
+
+    cout << "Convolving with Dirac ... ";
+    auto dirac_cv = convolveDirac(raw);
+    cout << "done." << endl;
+
+    cout << "Convolving with Box ... ";
+    auto box_cv = convolveBox(raw);
+    cout << "done." << endl;
+
+    cout << "Convolving with Laplacian ... ";
+    auto laplacian_cv = convolveLaplacian(raw);
+    cout << "done." << endl;
+
+    cout << "Convolving with Laplacian-of-Gaussian ... ";
+    auto log_cv = convolveLoG(raw);
+    cout << "done." << endl;
+
+    cout << "Applying median filter ... ";
+    const uint_fast8_t median_filter_size = 5;
+    auto median = applyMedianFilter(raw, median_filter_size);
+    auto median_cv = median->toOpenCv();
+    cout << "done." << endl;
+    
+    cout << "Convolving median filtered image with Laplacian filter ... ";
+    auto median_laplacian_cv = convolveLaplacian(median);
+    cout << "done." << endl;
 
     // === display noisy picture ===
 
     OpenCvWindow& window_noise = createWindow("noisy picture");
-    auto noise_cv = raw->toOpenCv();
     window_noise.showImage(noise_cv);
     cvWaitKey(1);
 
     // === display dirac convolved picture ===
 
     OpenCvWindow& window_dirac = createWindow("dirac");
-    auto dirac_cv = convolveDirac(raw);
     window_dirac.showImage(dirac_cv);
     cvWaitKey(1);
 
     // === display box convolved picture ===
 
     OpenCvWindow& window_box = createWindow("box");
-    auto box_cv = convolveBox(raw);
     window_box.showImage(box_cv);
     cvWaitKey(1);
 
     // === display laplace convolved picture ===
 
     OpenCvWindow& window_laplace = createWindow("laplacian");
-    auto laplacian_cv = convolveLaplacian(raw);
     window_laplace.showImage(laplacian_cv);
     cvWaitKey(1);
     
     // === display LoG convolved picture ===
 
     OpenCvWindow& window_log = createWindow("laplacian-of-gaussian");
-    auto log_cv = convolveLoG(raw);
     window_log.showImage(log_cv);
     cvWaitKey(1);
 
     // === display median filtered picture ===
 
     OpenCvWindow& window_median = createWindow("median filtered");
-    auto median_cv = applyMedianFilter(raw, 5);
     window_median.showImage(median_cv);
+    cvWaitKey(1);
+
+    // === display laplacian filtered median filtered picture ===
+
+    OpenCvWindow& window_median_laplacian = createWindow("laplacian of median filtered");
+    window_median_laplacian.showImage(median_laplacian_cv);
     cvWaitKey(1);
 
 

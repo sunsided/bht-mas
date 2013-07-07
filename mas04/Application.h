@@ -133,7 +133,7 @@ private:
     /// <param name="raw">The image.</param>
     /// <param name="size">The kernel size, must be an odd number.</param>
     /// <returns>The filtered image.</returns>
-    static IplImagePtr applyMedianFilter(const image_t& raw, const uint_fast8_t size = 3);
+    static image_t applyMedianFilter(const image_t& raw, const uint_fast8_t size = 3);
 };
 
 #endif
