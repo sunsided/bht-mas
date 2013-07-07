@@ -241,7 +241,12 @@ unique_ptr<FloatImage> FloatImage::convolve(const unique_ptr<FloatImage>& kernel
     assert ((kernel->lines & 0x1) == 0x1);   // kernel height must be odd
 
     // image to hold the convolved image
-    image_t target(new FloatImage(samples, lines, bands, false));
+#if _DEBUG
+    const bool initialize = true;
+#else
+    const bool initialize = false;
+#endif
+    image_t target(new FloatImage(samples, lines, bands, initialize));
 
     const samples_t raw_samples     = samples;
     const lines_t raw_lines         = lines;
