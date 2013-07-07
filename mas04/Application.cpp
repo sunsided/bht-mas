@@ -18,6 +18,8 @@
 
 using namespace std;
 
+#define KERNEL(x, y, v) kernel->set(x, y, static_cast<sample_t>(v))
+
 /// <summary>
 /// Initializes a new instance of the <see cref="Application"/> class.
 /// </summary>
@@ -131,10 +133,37 @@ IplImagePtr Application::convolveLaplacian(const image_t& raw)
 {
     // === create a 3x3 laplacian kernel ===
     
-    auto kernel = FloatImage::create(3, 3, 1, true);
+    auto kernel = FloatImage::create(3, 3, 1, false);
     kernel->set(0, 0, 0.0F);    kernel->set(0, 1, 1.0F);    kernel->set(0, 2, 0.0F);
     kernel->set(1, 0, 1.0F);    kernel->set(1, 1, -4.0F);    kernel->set(1, 2, 1.0F);
     kernel->set(2, 0, 0.0F);    kernel->set(2, 1, 1.0F);    kernel->set(2, 2, 0.0F);
+
+    // === convolve with the kernel ===
+    
+    auto convolved = raw->convolve(kernel);
+
+    // === convert to OpenCV ===
+    
+    return convolved->toOpenCv();
+}
+
+/// <summary>
+/// Convolves the image with a gaussian (low-pass) kernel
+/// </summary>
+/// <param name="raw">The raw image.</param>
+/// <returns>The convolved image in OpenCV format.</returns>
+IplImagePtr Application::convolveGaussian(const image_t& raw)
+{
+    // === create a 3x3 laplacian kernel ===
+    
+    auto kernel = FloatImage::create(5, 5, 1, false);
+    
+    // unweighted example kernel taken from http://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm
+    KERNEL(0, 0, 1); KERNEL(0, 1, 4); KERNEL(0, 2, 7); KERNEL(0, 3, 4); KERNEL(0, 4, 1);
+    KERNEL(1, 0, 4); KERNEL(1, 1,16); KERNEL(1, 2,26); KERNEL(1, 3,16); KERNEL(1, 4, 4);
+    KERNEL(2, 0, 7); KERNEL(2, 1,26); KERNEL(2, 2,41); KERNEL(2, 3,26); KERNEL(2, 4, 7);
+    KERNEL(3, 0, 4); KERNEL(3, 1,16); KERNEL(3, 2,26); KERNEL(3, 3,16); KERNEL(3, 4, 4);
+    KERNEL(4, 0, 1); KERNEL(4, 1, 4); KERNEL(4, 2, 7); KERNEL(4, 3, 4); KERNEL(4, 4, 1);
 
     // === convolve with the kernel ===
     
@@ -155,15 +184,13 @@ IplImagePtr Application::convolveLoG(const image_t& raw)
     // === create a 3x3 laplacian kernel ===
     
     auto kernel = FloatImage::create(5, 5, 1, true);
-    
-    #define VALUE(x, y, v) kernel->set(x, y, static_cast<sample_t>(v))
 
     // example kernel taken from: http://kurse.fh-regensburg.de/cato/module/bildverarbeitung/pr/modul_5/pdf/hochpass_s4.pdf
-    VALUE(0, 0, 0); VALUE(0, 1,-1); VALUE(0, 2,-2); VALUE(0, 3,-1); VALUE(0, 4, 0);
-    VALUE(1, 0,-1); VALUE(1, 1, 0); VALUE(1, 2, 2); VALUE(1, 3, 0); VALUE(1, 4,-1);
-    VALUE(2, 0,-2); VALUE(2, 1, 2); VALUE(2, 2, 8); VALUE(2, 3, 2); VALUE(2, 4,-2);
-    VALUE(3, 0,-1); VALUE(3, 1, 0); VALUE(3, 2, 2); VALUE(3, 3, 0); VALUE(3, 4,-1);
-    VALUE(4, 0, 0); VALUE(4, 1,-1); VALUE(4, 2,-2); VALUE(4, 3,-1); VALUE(4, 4, 0);
+    KERNEL(0, 0, 0); KERNEL(0, 1,-1); KERNEL(0, 2,-2); KERNEL(0, 3,-1); KERNEL(0, 4, 0);
+    KERNEL(1, 0,-1); KERNEL(1, 1, 0); KERNEL(1, 2, 2); KERNEL(1, 3, 0); KERNEL(1, 4,-1);
+    KERNEL(2, 0,-2); KERNEL(2, 1, 2); KERNEL(2, 2, 8); KERNEL(2, 3, 2); KERNEL(2, 4,-2);
+    KERNEL(3, 0,-1); KERNEL(3, 1, 0); KERNEL(3, 2, 2); KERNEL(3, 3, 0); KERNEL(3, 4,-1);
+    KERNEL(4, 0, 0); KERNEL(4, 1,-1); KERNEL(4, 2,-2); KERNEL(4, 3,-1); KERNEL(4, 4, 0);
     
     #undef VALUE
 
@@ -299,15 +326,16 @@ image_t Application::applyMedianFilter(const image_t& raw, const uint_fast8_t si
     const lines_t raw_lines         = raw->lines;
     
     const ssamples_t kernel_halfsamples = static_cast<slines_t>(size) / 2;
-    const slines_t kernel_halflines = static_cast<slines_t>(size) / 2;
+    const slines_t kernel_halflines = static_cast<slines_t>(size) / 2;  
 
+    // the samples within the kernel window
     vector<sample_t> kernel_samples;
 
     // OpenMP needs signed integral type
     typedef int_fast32_t omp_linecount_t;
     omp_linecount_t omp_lines = raw_lines;
 
-    //#pragma omp parallel for
+    #pragma omp parallel for private(kernel_samples)
     for (omp_linecount_t y = 0; y < omp_lines; ++y)
     {
         line_t &target_line = target->line(y);
@@ -424,6 +452,10 @@ void Application::run()
     auto box_cv = convolveBox(raw);
     cout << "done." << endl;
 
+    cout << "Convolving with Gaussian ... ";
+    auto gaussian_cv = convolveGaussian(raw);
+    cout << "done." << endl;
+
     cout << "Convolving with Laplacian ... ";
     auto laplacian_cv = convolveLaplacian(raw);
     cout << "done." << endl;
@@ -458,6 +490,12 @@ void Application::run()
 
     OpenCvWindow& window_box = createWindow("box");
     window_box.showImage(box_cv);
+    cvWaitKey(1);
+
+    // === display box gaussien picture ===
+
+    OpenCvWindow& window_gaussian = createWindow("gaussian");
+    window_gaussian.showImage(gaussian_cv);
     cvWaitKey(1);
 
     // === display laplace convolved picture ===

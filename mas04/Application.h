@@ -94,6 +94,13 @@ private:
     /// <param name="raw">The raw image.</param>
     /// <returns>The convolved image in OpenCV format.</returns>
     static IplImagePtr convolveBox(const image_t& raw);
+    
+    /// <summary>
+    /// Convolves the image with a gaussian (low-pass) kernel
+    /// </summary>
+    /// <param name="raw">The raw image.</param>
+    /// <returns>The convolved image in OpenCV format.</returns>
+    IplImagePtr convolveGaussian(const image_t& raw);
 
     /// <summary>
     /// Convolves the image with a laplacian (high-pass) kernel

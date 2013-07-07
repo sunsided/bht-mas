@@ -26,13 +26,17 @@ Using the 3x3 box filter kernel
 
 ### Lowpass: Gaussian Filter
 
-A 3x3 [gaussian kernel](http://en.wikipedia.org/wiki/Gaussian_filter) not directly used in this project is
+The 5x5 [gaussian kernel](http://en.wikipedia.org/wiki/Gaussian_filter) used in this project is
     
-    | 1 | 2 | 1 |
-    | 2 | 4 | 2 |
-    | 1 | 2 | 1 |
+    |  1 |  4 |  7 |  4 |  1 |
+    |  4 | 16 | 26 | 16 |  4 |
+    |  7 | 26 | 41 | 26 |  7 |
+	|  4 | 16 | 26 | 16 |  4 |
+    |  1 |  4 |  7 |  4 |  1 |
 
-See *Laplacian-of-Gaussian* below for further information.
+The coefficients used here are taken from [Gaussian Smoothing](http://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm) and represent a gaussian kernel with a standard deviation of 1. Note again that this filter is weighted - scaled by the sum of its coefficients - in the convolution method itself.
+
+Another 3x3 gaussian filter is used in the *Laplacian-of-Gaussian* section below. The kernel described there could have been used here but resulted in ludicrously bad smoothing especially in the context of salt-and-pepper noise.
 
 ### Highpass: Laplacian Filter
 
@@ -46,7 +50,13 @@ Using the 3x3 [laplacian kernel](http://en.wikipedia.org/wiki/Discrete_Laplace_o
 
 The LoG kernel ([Marr-Hildreth algorithm](http://en.wikipedia.org/wiki/Marr%E2%80%93Hildreth_algorithm)) is the application of same-sized laplacian and gaussian kernels in sequence (in either combination, i.e. laplacian first, then gaussian or gaussian first, then laplacian). 
 
-The kernel used was derived by multiplying the aforementioned laplacian filter kernel by the aforementioned gaussian filter kernel, resulting in the following 5x5 LoG kernel
+The kernel used was derived by multiplying the aforementioned laplacian filter kernel by the 3x3 gaussian filter kernel
+    
+    | 1 | 2 | 1 |
+    | 2 | 4 | 2 |
+    | 1 | 2 | 1 |
+
+resulting in the following 5x5 LoG kernel
     
     |  0 | -1 | -2 | -1 |  0 |
     | -1 |  0 |  2 |  0 | -1 |
