@@ -219,7 +219,7 @@ unique_ptr<FloatImage> FloatImage::create(const samples_t& samples, const lines_
 void FloatImage::flipVertical() 
 {
     const lines_t halfLines = lines/2; // TODO: should work for odd line numbers, but better test that
-    for (lines_t lineIndex = 0; lineIndex <= halfLines; ++lineIndex)
+    for (lines_t lineIndex = 0; lineIndex < halfLines; ++lineIndex)
     {
         line_t& top = _image[lineIndex];
         line_t& bottom = _image[lines - lineIndex - 1];
