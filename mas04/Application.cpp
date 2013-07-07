@@ -482,43 +482,43 @@ void Application::run()
 
     // === display dirac convolved picture ===
 
-    OpenCvWindow& window_dirac = createWindow("dirac");
+    OpenCvWindow& window_dirac = createWindow("3x3 dirac");
     window_dirac.showImage(dirac_cv);
     cvWaitKey(1);
 
     // === display box convolved picture ===
 
-    OpenCvWindow& window_box = createWindow("box");
+    OpenCvWindow& window_box = createWindow("3x3 box");
     window_box.showImage(box_cv);
     cvWaitKey(1);
 
     // === display box gaussien picture ===
 
-    OpenCvWindow& window_gaussian = createWindow("gaussian");
+    OpenCvWindow& window_gaussian = createWindow("5x5 gaussian");
     window_gaussian.showImage(gaussian_cv);
     cvWaitKey(1);
 
     // === display laplace convolved picture ===
 
-    OpenCvWindow& window_laplace = createWindow("laplacian");
+    OpenCvWindow& window_laplace = createWindow("3x3 laplacian");
     window_laplace.showImage(laplacian_cv);
     cvWaitKey(1);
     
     // === display LoG convolved picture ===
 
-    OpenCvWindow& window_log = createWindow("laplacian-of-gaussian");
+    OpenCvWindow& window_log = createWindow("5x5 laplacian-of-gaussian");
     window_log.showImage(log_cv);
     cvWaitKey(1);
 
     // === display median filtered picture ===
 
-    OpenCvWindow& window_median = createWindow("median filtered");
+    OpenCvWindow& window_median = createWindow("3x3 median filtered");
     window_median.showImage(median_cv);
     cvWaitKey(1);
 
     // === display laplacian filtered median filtered picture ===
 
-    OpenCvWindow& window_median_laplacian = createWindow("laplacian of median filtered");
+    OpenCvWindow& window_median_laplacian = createWindow("3x3 laplacian of 3x3 median filtered");
     window_median_laplacian.showImage(median_laplacian_cv);
     cvWaitKey(1);
 
