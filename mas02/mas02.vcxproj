@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A1932C73-AEE8-428F-B949-AD38368C49F3}</ProjectGuid>
-    <RootNamespace>mas1</RootNamespace>
+    <RootNamespace>mas</RootNamespace>
     <ProjectName>mas02</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
