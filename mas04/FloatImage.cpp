@@ -285,7 +285,7 @@ unique_ptr<FloatImage> FloatImage::convolve(const unique_ptr<FloatImage>& kernel
                 for (samples_t mx = 0; mx < kernel_samples; ++mx)
                 {
                     // calculate the image line
-                    slines_t raw_x = x + mx + kernel_halfsamples;
+                    slines_t raw_x = x + mx - kernel_halfsamples;
 
                     // grab the kernel and image lines assuming they're valid
                     const sample_t &kernel_sample = kernel_line->sample(mx);
