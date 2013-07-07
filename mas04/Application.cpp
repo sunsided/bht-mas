@@ -3,10 +3,11 @@
 #pragma warning(disable: 4996) // Disable deprecation
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <fstream>
-#include <cmath>
 #include <memory>
+#include <random>
 
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
@@ -164,6 +165,8 @@ IplImagePtr Application::convolveLoG(const image_t& raw)
     VALUE(3, 0,-1); VALUE(3, 1, 0); VALUE(3, 2, 2); VALUE(3, 3, 0); VALUE(3, 4,-1);
     VALUE(4, 0, 0); VALUE(4, 1,-1); VALUE(4, 2,-2); VALUE(4, 3,-1); VALUE(4, 4, 0);
     
+    #undef VALUE
+
     // === convolve with the kernel ===
     
     auto convolved = raw->convolve(kernel);
@@ -171,6 +174,38 @@ IplImagePtr Application::convolveLoG(const image_t& raw)
     // === convert to OpenCV ===
     
     return convolved->toOpenCv();
+}
+
+
+/// <summary>
+/// Applies an additive white gaussian noise.
+/// </summary>
+/// <param name="image">The image.</param>
+void applyAWGN(image_t& image, const float gain = 1.0F, const float standard_deviation = 1.0F) 
+{
+    // create the noise distribution
+    const float mean = 0.0F;
+    normal_distribution<float> distribution(mean, standard_deviation);
+
+    // the generator used
+    default_random_engine generator;
+
+    // apply the noise
+    const samples_t samples = image->samples;
+    const lines_t lines = image->lines;
+    for (lines_t lineIndex = 0; lineIndex < lines; ++lineIndex)
+    {
+        line_t& line = image->line(lineIndex);
+
+        // THEORY: Band agnostic, since samples should contain all bands
+        for(samples_t x=0; x<samples; ++x)
+        {
+            sample_t& sample = line->sample(x);
+            
+            const sample_t noise = static_cast<sample_t>(gain * distribution(generator));
+            sample += noise;
+        }
+    }
 }
 
 /// <summary>
@@ -195,6 +230,19 @@ void Application::run()
     OpenCvWindow& window_raw = createWindow("raw picture");
     auto raw_cv = raw->toOpenCv();
     window_raw.showImage(raw_cv);
+    cvWaitKey(1);
+
+    // === apply noise ===
+
+    const float awgn_gain = 0.5F; // encodes the signal-to-noise ratio
+    const float awgn_standard_deviation = 0.125F;
+    applyAWGN(raw, awgn_gain, awgn_standard_deviation);
+
+    // === display noisy picture ===
+
+    OpenCvWindow& window_noise = createWindow("noisy picture");
+    auto noise_cv = raw->toOpenCv();
+    window_noise.showImage(noise_cv);
     cvWaitKey(1);
 
     // === display dirac convolved picture ===
